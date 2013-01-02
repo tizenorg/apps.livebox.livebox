@@ -1,6 +1,6 @@
 Name: liblivebox
 Summary: Library for the development of a livebox 
-Version: 0.1.6
+Version: 0.1.7
 Release: 1
 Group: main/app
 License: Flora License
