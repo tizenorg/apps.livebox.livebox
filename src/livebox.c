@@ -32,10 +32,13 @@
 
 #define EAPI __attribute__((visibility("default")))
 
+#define FILE_SCHEMA	"file://"
+
 /*!
  * \brief This function is defined by the data-provider-slave
  */
 extern const char *livebox_find_pkgname(const char *filename);
+extern int livebox_request_update_by_id(const char *uri);
 
 struct block {
 	unsigned int idx;
@@ -457,28 +460,49 @@ EAPI struct livebox_buffer *livebox_acquire_buffer(const char *filename, int is_
 		return NULL;
 	}
 
-	uri_len = strlen(filename) + strlen("file://") + 1;
+	uri_len = strlen(filename) + strlen(FILE_SCHEMA) + 1;
 	uri = malloc(uri_len);
 	if (!uri) {
 		ErrPrint("Heap: %s\n", strerror(errno));
 		return NULL;
 	}
 
-	snprintf(uri, uri_len, "file://%s", filename);
-	DbgPrint("Before call the livebox_find_pkgname\n");
+	snprintf(uri, uri_len, FILE_SCHEMA "%s", filename);
 	pkgname = livebox_find_pkgname(uri);
-	DbgPrint("After call the livebox_find_pkgname\n");
 	if (!pkgname) {
 		ErrPrint("Invalid Request\n");
 		free(uri);
 		return NULL;
 	}
 
-	DbgPrint("URI: %s\n", uri);
 	handle = provider_buffer_acquire((!!is_pd) ? TYPE_PD : TYPE_LB, pkgname, uri, width, height, sizeof(int), handler, data);
 	DbgPrint("Acquire buffer for PD(%s), %s, %p\n", pkgname, uri, handle);
 	free(uri);
 	return handle;
+}
+
+EAPI int livebox_request_update(const char *filename)
+{
+	int uri_len;
+	char *uri;
+	int ret;
+
+	if (!filename) {
+		ErrPrint("Invalid argument\n");
+		return -EINVAL;
+	}
+
+	uri_len = strlen(filename) + strlen(FILE_SCHEMA) + 1;
+	uri = malloc(uri_len);
+	if (!uri) {
+		ErrPrint("Heap: %s\n", strerror(errno));
+		return -ENOMEM;
+	}
+
+	snprintf(uri, uri_len, FILE_SCHEMA "%s", filename);
+	ret = livebox_request_update_by_id(uri);
+	free(uri);
+	return ret;
 }
 
 EAPI unsigned long livebox_pixmap_id(struct livebox_buffer *handle)

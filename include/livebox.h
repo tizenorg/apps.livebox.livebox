@@ -204,6 +204,13 @@ extern int livebox_unref_buffer(void *buffer);
  */
 extern int livebox_sync_buffer(struct livebox_buffer *handle);
 
+/*!
+ * \brief
+ * \param[in] filename
+ * \return int
+ */
+extern int livebox_request_update(const char *filename);
+
 #ifdef __cplusplus
 }
 #endif
