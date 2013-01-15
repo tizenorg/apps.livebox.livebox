@@ -68,8 +68,9 @@ EAPI const int NEED_TO_CREATE = 0x01;
 EAPI const int NEED_TO_DESTROY = 0x01;
 EAPI const int LB_SYS_EVENT_FONT_CHANGED = 0x01;
 EAPI const int LB_SYS_EVENT_LANG_CHANGED = 0x02;
-EAPI const int LB_SYS_EVENT_PAUSED = 0x04;
-EAPI const int LB_SYS_EVENT_RESUMED = 0x08;
+EAPI const int LB_SYS_EVENT_TIME_CHANGED = 0x04;
+EAPI const int LB_SYS_EVENT_PAUSED = 0x0100;
+EAPI const int LB_SYS_EVENT_RESUMED = 0x0200;
 
 EAPI struct livebox_desc *livebox_desc_open(const char *filename, int for_pd)
 {
