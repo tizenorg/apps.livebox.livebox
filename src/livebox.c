@@ -287,7 +287,7 @@ EAPI char *livebox_util_nl2br(const char *str)
 	if (!len)
 		return NULL;
 
-	ret = malloc(len);
+	ret = malloc(len + 1);
 	if (!ret)
 		return NULL;
 
@@ -300,7 +300,7 @@ EAPI char *livebox_util_nl2br(const char *str)
 				char *tmp;
 				len += len;
 
-				tmp = realloc(ret, len);
+				tmp = realloc(ret, len + 1);
 				if (!tmp) {
 					free(ret);
 					return NULL;
