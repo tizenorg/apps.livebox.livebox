@@ -62,10 +62,14 @@ struct livebox_desc {
 };
 
 EAPI const int DONE = 0x00;
-EAPI const int NEED_TO_SCHEDULE = 0x01;
 EAPI const int OUTPUT_UPDATED = 0x02;
+EAPI const int USE_NET = 0x04;
+
+EAPI const int NEED_TO_SCHEDULE = 0x01;
 EAPI const int NEED_TO_CREATE = 0x01;
 EAPI const int NEED_TO_DESTROY = 0x01;
+EAPI const int NEED_TO_UPDATE = 0x01;
+
 EAPI const int LB_SYS_EVENT_FONT_CHANGED = 0x01;
 EAPI const int LB_SYS_EVENT_LANG_CHANGED = 0x02;
 EAPI const int LB_SYS_EVENT_TIME_CHANGED = 0x04;

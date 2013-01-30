@@ -28,10 +28,14 @@ struct livebox_buffer; /* Defined by provider */
  * Return values of livebox programming interfaces.
  */
 extern const int DONE; /*!< Operation is successfully done */
-extern const int NEED_TO_SCHEDULE; /*!< Need to call the livebox_need_to_update and livebox_update_content */
 extern const int OUTPUT_UPDATED; /*!< Contents is updated */
+
+extern const int NEED_TO_SCHEDULE; /*!< Need to call the livebox_need_to_update and livebox_update_content */
 extern const int NEED_TO_CREATE; /*!< Need to create a new instance */
 extern const int NEED_TO_DESTROY; /*!< Need to destroy this instance */
+extern const int NEED_TO_UPDATE;
+
+extern const int USE_NET; /*!< Using network */
 
 extern const int LB_SYS_EVENT_FONT_CHANGED; /*!< System font is changed */
 extern const int LB_SYS_EVENT_LANG_CHANGED; /*!< System language is changed */
@@ -39,6 +43,7 @@ extern const int LB_SYS_EVENT_TIME_CHANGED; /*!< System time is changed */
 extern const int LB_SYS_EVENT_PAUSED;
 extern const int LB_SYS_EVENT_RESUMED;
 
+#define LB_DESC_TYPE_COLOR "color"
 #define LB_DESC_TYPE_TEXT "text"
 #define LB_DESC_TYPE_IMAGE "image"
 #define LB_DESC_TYPE_SIGNAL "signal"
