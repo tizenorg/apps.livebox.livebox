@@ -46,7 +46,7 @@ struct block {
 	char *type;
 	char *part;
 	char *data;
-	char *group;
+	char *option;
 	char *id;
 	char *file;
 	char *target_id;
@@ -148,9 +148,9 @@ EAPI int livebox_desc_close(struct livebox_desc *handle)
 			DbgPrint("data=%s\n", block->data);
 		}
 
-		if (block->group) {
-			fprintf(handle->fp, "group=%s\n", block->group);
-			DbgPrint("group=%s\n", block->group);
+		if (block->option) {
+			fprintf(handle->fp, "option=%s\n", block->option);
+			DbgPrint("option=%s\n", block->option);
 		}
 
 		if (block->id) {
@@ -169,7 +169,7 @@ EAPI int livebox_desc_close(struct livebox_desc *handle)
 		free(block->type);
 		free(block->part);
 		free(block->data);
-		free(block->group);
+		free(block->option);
 		free(block->id);
 		free(block->target_id);
 		free(block);
@@ -365,7 +365,7 @@ EAPI int livebox_desc_set_id(struct livebox_desc *handle, int idx, const char *i
 /*!
  * \return idx
  */
-EAPI int livebox_desc_add_block(struct livebox_desc *handle, const char *id, const char *type, const char *part, const char *data, const char *group)
+EAPI int livebox_desc_add_block(struct livebox_desc *handle, const char *id, const char *type, const char *part, const char *data, const char *option)
 {
 	struct block *block;
 
@@ -403,9 +403,9 @@ EAPI int livebox_desc_add_block(struct livebox_desc *handle, const char *id, con
 		return -ENOMEM;
 	}
 
-	if (group) {
-		block->group = strdup(group);
-		if (!block->group) {
+	if (option) {
+		block->option = strdup(option);
+		if (!block->option) {
 			free(block->data);
 			free(block->type);
 			free(block->part);
@@ -417,7 +417,7 @@ EAPI int livebox_desc_add_block(struct livebox_desc *handle, const char *id, con
 	if (id) {
 		block->id = strdup(id);
 		if (!block->id) {
-			free(block->group);
+			free(block->option);
 			free(block->data);
 			free(block->type);
 			free(block->part);
@@ -442,7 +442,7 @@ EAPI int livebox_desc_del_block(struct livebox_desc *handle, int idx)
 			free(block->type);
 			free(block->part);
 			free(block->data);
-			free(block->group);
+			free(block->option);
 			free(block->id);
 			free(block->target_id);
 			free(block);

@@ -125,10 +125,10 @@ extern int livebox_desc_set_id(struct livebox_desc *handle, int idx, const char 
  * \param[in] type image|text|script|signal|...
  * \param[in] part target part to update with given content(data)
  * \param[in] data content for specified part
- * \param[in] group script group name
+ * \param[in] option option for the block. (script: group, image: option, ...)
  * \return idx Index of current description block
  */
-extern int livebox_desc_add_block(struct livebox_desc *handle, const char *id, const char *type, const char *part, const char *data, const char *group);
+extern int livebox_desc_add_block(struct livebox_desc *handle, const char *id, const char *type, const char *part, const char *data, const char *option);
 
 /*!
  * \brief Delete a added block
