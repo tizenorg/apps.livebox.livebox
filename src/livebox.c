@@ -526,11 +526,22 @@ EAPI int livebox_release_buffer(struct livebox_buffer *handle)
 
 EAPI void *livebox_ref_buffer(struct livebox_buffer *handle)
 {
+	void *data;
+	int w, h, size;
+	int ret;
 	if (!handle)
 		return -EINVAL;
 
-	DbgPrint("Ref buffer\n");
-	return provider_buffer_ref(handle);
+	ret = provider_buffer_get_size(handle, &w, &h, &size);
+
+	data = provider_buffer_ref(handle);
+	if (data && !ret && w > 0 && h > 0 && size > 0) {
+		memset(data, 0, w * h * size);
+		provider_buffer_sync(handle);
+	}
+
+	DbgPrint("Ref buffer %ds%d(%d)\n", w, h, size);
+	return data;
 }
 
 EAPI int livebox_unref_buffer(void *buffer)
