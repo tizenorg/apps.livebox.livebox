@@ -61,6 +61,11 @@ struct livebox_desc {
 	struct dlist *block_list;
 };
 
+struct livebox_buffer_data {
+	int is_pd;
+	int accelerated;
+};
+
 EAPI const int DONE = 0x00;
 EAPI const int OUTPUT_UPDATED = 0x02;
 EAPI const int USE_NET = 0x04;
@@ -455,6 +460,7 @@ EAPI int livebox_desc_del_block(struct livebox_desc *handle, int idx)
 
 EAPI struct livebox_buffer *livebox_acquire_buffer(const char *filename, int is_pd, int width, int height, int (*handler)(struct livebox_buffer *, enum buffer_event, double, double, double, void *), void *data)
 {
+	struct livebox_buffer_data *user_data;
 	const char *pkgname;
 	struct livebox_buffer *handle;
 	char *uri;
@@ -465,10 +471,19 @@ EAPI struct livebox_buffer *livebox_acquire_buffer(const char *filename, int is_
 		return NULL;
 	}
 
+	user_data = calloc(1, sizeof(*user_data));
+	if (!user_data) {
+		ErrPrint("Heap: %s\n", strerror(errno));
+		return NULL;
+	}
+
+	user_data->is_pd = is_pd;
+
 	uri_len = strlen(filename) + strlen(FILE_SCHEMA) + 1;
 	uri = malloc(uri_len);
 	if (!uri) {
 		ErrPrint("Heap: %s\n", strerror(errno));
+		free(user_data);
 		return NULL;
 	}
 
@@ -476,6 +491,7 @@ EAPI struct livebox_buffer *livebox_acquire_buffer(const char *filename, int is_
 	pkgname = livebox_find_pkgname(uri);
 	if (!pkgname) {
 		ErrPrint("Invalid Request\n");
+		free(user_data);
 		free(uri);
 		return NULL;
 	}
@@ -483,6 +499,8 @@ EAPI struct livebox_buffer *livebox_acquire_buffer(const char *filename, int is_
 	handle = provider_buffer_acquire((!!is_pd) ? TYPE_PD : TYPE_LB, pkgname, uri, width, height, sizeof(int), handler, data);
 	DbgPrint("Acquire buffer for PD(%s), %s, %p\n", pkgname, uri, handle);
 	free(uri);
+
+	(void)provider_buffer_set_user_data(handle, user_data);
 	return handle;
 }
 
@@ -517,8 +535,16 @@ EAPI unsigned long livebox_pixmap_id(struct livebox_buffer *handle)
 
 EAPI int livebox_release_buffer(struct livebox_buffer *handle)
 {
+	struct livebox_buffer_data *user_data;
+
 	if (!handle)
 		return -EINVAL;
+
+	user_data = provider_buffer_user_data(handle);
+	if (user_data) {
+		free(user_data);
+		provider_buffer_set_user_data(handle, NULL);
+	}
 
 	DbgPrint("Release buffer\n");
 	return provider_buffer_release(handle);
@@ -526,11 +552,22 @@ EAPI int livebox_release_buffer(struct livebox_buffer *handle)
 
 EAPI void *livebox_ref_buffer(struct livebox_buffer *handle)
 {
+	struct livebox_buffer_data *user_data;
 	void *data;
 	int w, h, size;
 	int ret;
+
 	if (!handle)
-		return -EINVAL;
+		return NULL;
+
+	user_data = provider_buffer_user_data(handle);
+	if (!user_data)
+		return NULL;
+
+	if (user_data->accelerated) {
+		DbgPrint("H/W accelerated buffer is allocated\n");
+		return NULL;
+	}
 
 	ret = provider_buffer_get_size(handle, &w, &h, &size);
 
@@ -555,22 +592,184 @@ EAPI int livebox_unref_buffer(void *buffer)
 
 EAPI int livebox_sync_buffer(struct livebox_buffer *handle)
 {
+	struct livebox_buffer_data *user_data;
 	const char *pkgname;
 	const char *id;
 
 	if (!handle)
 		return -EINVAL;
 
+	user_data = provider_buffer_user_data(handle);
+	if (!user_data) {
+		ErrPrint("Invalid buffer\n");
+		return -EINVAL;
+	}
+
+	if (user_data->accelerated) {
+		DbgPrint("H/W Buffer allocated. skip the sync buffer\n");
+		return 0;
+	}
+
 	pkgname = provider_buffer_pkgname(handle);
+	if (!pkgname) {
+		ErrPrint("Invalid buffer handler\n");
+		return -EINVAL;
+	}
+
 	id = provider_buffer_id(handle);
-	if (!pkgname || !id) {
+	if (!id) {
 		ErrPrint("Invalid buffer handler\n");
 		return -EINVAL;
 	}
 
 	DbgPrint("Sync buffer\n");
 	provider_buffer_sync(handle);
-	provider_send_desc_updated(pkgname, id, NULL);
+
+	if (user_data->is_pd) {
+		if (provider_send_desc_updated(pkgname, id, NULL) < 0)
+			ErrPrint("Failed to send PD updated (%s)\n", id);
+	} else {
+		int w;
+		int h;
+		int pixel_size;
+
+		if (provider_buffer_get_size(handle, &w, &h, &pixel_size) < 0)
+			ErrPrint("Failed to get size (%s)\n", id);
+
+		if (provider_send_updated(pkgname, id, w, h, -1.0f, NULL, NULL) < 0)
+			ErrPrint("Failed to send updated (%s)\n", id);
+	}
+	return 0;
+}
+
+EAPI int livebox_support_hw_buffer(struct livebox_buffer *handle)
+{
+	if (!handle)
+		return -EINVAL;
+
+	return provider_buffer_pixmap_is_support_hw(handle);
+}
+
+EAPI int livebox_create_hw_buffer(struct livebox_buffer *handle)
+{
+	struct livebox_buffer_data *user_data;
+	int ret;
+
+	if (!handle)
+		return -EINVAL;
+
+	user_data = provider_buffer_user_data(handle);
+	if (!user_data)
+		return -EINVAL;
+
+	if (user_data->accelerated)
+		return -EALREADY;
+
+	ret = provider_buffer_pixmap_create_hw(handle);
+	user_data->accelerated = (ret == 0);
+	return ret;
+}
+
+EAPI int livebox_destroy_hw_buffer(struct livebox_buffer *handle)
+{
+	struct livebox_buffer_data *user_data;
+	if (!handle)
+		return -EINVAL;
+
+	user_data = provider_buffer_user_data(handle);
+	if (!user_data || !user_data->accelerated)
+		return -EINVAL;
+
+	user_data->accelerated = 0;
+
+	return provider_buffer_pixmap_destroy_hw(handle);
+}
+
+EAPI void *livebox_buffer_hw_buffer(struct livebox_buffer *handle)
+{
+	struct livebox_buffer_data *user_data;
+
+	if (!handle)
+		return NULL;
+
+	user_data = provider_buffer_user_data(handle);
+	if (!user_data || !user_data->accelerated)
+		return -EINVAL;
+
+	return provider_buffer_pixmap_hw_addr(handle);
+}
+
+EAPI int livebox_buffer_pre_render(struct livebox_buffer *handle)
+{
+	struct livebox_buffer_data *user_data;
+
+	if (!handle)
+		return -EINVAL;
+
+	user_data = provider_buffer_user_data(handle);
+	if (!user_data)
+		return -EINVAL;
+
+	if (!user_data->accelerated)
+		return 0;
+
+	/*!
+	 * \note
+	 * Do preprocessing for accessing the H/W render buffer
+	 */
+	return provider_buffer_pre_render(handle);
+}
+
+EAPI int livebox_buffer_post_render(struct livebox_buffer *handle)
+{
+	int ret;
+	const char *pkgname;
+	const char *id;
+	struct livebox_buffer_data *user_data;
+
+	if (!handle)
+		return -EINVAL;
+
+	user_data = provider_buffer_user_data(handle);
+	if (!user_data)
+		return -EINVAL;
+
+	if (!user_data->accelerated)
+		return 0;
+
+	pkgname = provider_buffer_pkgname(handle);
+	if (!pkgname) {
+		ErrPrint("Invalid buffer handle\n");
+		return -EINVAL;
+	}
+
+	id = provider_buffer_id(handle);
+	if (!id) {
+		ErrPrint("Invalid buffer handler\n");
+		return -EINVAL;
+	}
+
+	ret = provider_buffer_post_render(handle);
+	if (ret < 0) {
+		ErrPrint("Failed to post render processing\n");
+		return ret;
+	}
+
+	if (user_data->is_pd == 1) {
+		if (provider_send_desc_updated(pkgname, id, NULL) < 0)
+			ErrPrint("Failed to send PD updated (%s)\n", id);
+	} else {
+		int w;
+		int h;
+		int pixel_size;
+
+		if (provider_buffer_get_size(handle, &w, &h, &pixel_size) < 0)
+			ErrPrint("Failed to get size (%s)\n", id);
+
+		if (provider_send_updated(pkgname, id, w, h, -1.0f, NULL, NULL) < 0)
+			ErrPrint("Failed to send updated (%s)\n", id);
+	}
+
 	return 0;
 }
 

@@ -157,65 +157,127 @@ extern char *livebox_util_nl2br(const char *str);
  * This enumeration value should be sync'd with provider
  */
 enum buffer_event {
-	BUFFER_EVENT_ENTER, /*!< */
-	BUFFER_EVENT_LEAVE, /*!< */
-	BUFFER_EVENT_DOWN, /*!< */
-	BUFFER_EVENT_MOVE, /*!< */
-	BUFFER_EVENT_UP, /*!< */
+	BUFFER_EVENT_ENTER, /*!< Mouse cursor enter */
+	BUFFER_EVENT_LEAVE, /*!< Mouse cursor leave */
+	BUFFER_EVENT_DOWN, /*!< Mouse down */
+	BUFFER_EVENT_MOVE, /*!< Mouse move */
+	BUFFER_EVENT_UP, /*!< Mouse up */
+
+	BUFFER_EVENT_KEY_DOWN, /*!< Key down */
+	BUFFER_EVENT_KEY_UP, /*!< Key up */
 };
 #endif
 
 /*!
- * \brief
- * \param[in] filename
- * \param[in] width
- * \param[in] height
- * \param[in] handler
- * \param[in] data
- * \return handler
+ * \brief Acquire a buffer for PD or LB, Currently, we only supporting the PD.
+ * \param[in] id Id of a livebox instance
+ * \param[in] is_pd 1 for PD or 0 for livebox
+ * \param[in] width Width
+ * \param[in] height Height
+ * \param[in] handler Event handling callback
+ * \param[in] data user data for event handling callback
+ * \return handler Buffer handle
  */
-extern struct livebox_buffer *livebox_acquire_buffer(const char *filename, int is_pd, int width, int height, int (*handler)(struct livebox_buffer *, enum buffer_event, double, double, double, void *), void *data);
+extern struct livebox_buffer *livebox_acquire_buffer(const char *id, int is_pd, int width, int height, int (*handler)(struct livebox_buffer *, enum buffer_event, double, double, double, void *), void *data);
 
 /*!
- * \param[in] filename
- * \return pixmap ID
+ * \brief Acquire the ID of pixmap resource
+ *        Only if the provider uses pixmap for providing render buffer.
+ * \param[in] handle Buffer handle
+ * \return pixmap ID if succeed or 0lu
+ * \see livebox_acquire_buffer
  */
 extern unsigned long livebox_pixmap_id(struct livebox_buffer *handle);
 
 /*!
  * \brief
- * \param[in] handle
+ * \param[in] handle Buffer handle
  * \return int
+ * \see livebox_acquire_buffer
  */
 extern int livebox_release_buffer(struct livebox_buffer *handle);
 
 /*!
- * \brief
- * \param[in] handle
- * \return void* buffer
+ * \brief Get the address of S/W render buffer.
+ *        If you try to use this, after create_hw_buffer, you will get NULL
+ * \param[in] handle Buffer handle
+ * \return void* address of the render buffer
+ * \see livebox_unref_buffer
  */
 extern void *livebox_ref_buffer(struct livebox_buffer *handle);
 
 /*!
- * \brief
- * \param[in] buffer
- * \return int
+ * \brief Release the S/W render buffer.
+ * \param[in] void* Address of render buffer
+ * \return int 0 if succeed or errno < 0
+ * \see livebox_ref_buffer
  */
 extern int livebox_unref_buffer(void *buffer);
 
 /*!
- * \brief
- * \param[in] handler
- * \return int
+ * \brief Sync the updated buffer
+ *        This is only needed for non-H/W accelerated buffer
+ * \param[in] handler Buffer handle
+ * \return int 0 if succeed or errno < 0
+ * \see livebox_acquire_buffer
  */
 extern int livebox_sync_buffer(struct livebox_buffer *handle);
 
 /*!
- * \brief
- * \param[in] filename
- * \return int
+ * \brief Request schedule the update operation to a provider.
+ * \param[in] id Livebox Id
+ * \return int 0 if succeed or errno < 0
  */
-extern int livebox_request_update(const char *filename);
+extern int livebox_request_update(const char *id);
+
+/*!
+ * \brief Checking wether the livebox support H/W acceleration or not.
+ * \param[in] handle Buffer handle.
+ * \return 1 if support or 0
+ * \see livebox_acquire_buffer
+ */
+extern int livebox_support_hw_buffer(struct livebox_buffer *handle);
+
+/*!
+ * \brief Create the H/W accelerated buffer.
+ * \param[in] handle Buffer handle
+ * \return 0 if succeed to create it or errno < 0
+ * \see livebox_support_hw_buffer
+ */
+extern int livebox_create_hw_buffer(struct livebox_buffer *handle);
+
+/*!
+ * \brief Destroy the H/W accelerated buffer.
+ * \param[in] handle Buffer handle
+ * \return 0 if succeed to destroy it or errno < 0
+ * \see livebox_create_hw_buffer
+ */
+extern int livebox_destroy_hw_buffer(struct livebox_buffer *handle);
+
+/*!
+ * \brief Get the address of accelerated H/W buffer
+ * \param[in] handle Buffer handle
+ * \return void
+ * \see livebox_create_hw_buffer
+ */
+extern void *livebox_buffer_hw_buffer(struct livebox_buffer *handle);
+
+/*!
+ * \brief Pre-processing for rendering content.
+ *        This is only needed for accessing H/W accelerated buffer.
+ * \param[in] handle Buffer handle
+ * \return 0 if succeed or errno < 0
+ * \see livebox_support_hw_buffer
+ */
+extern int livebox_buffer_pre_render(struct livebox_buffer *handle);
+
+/*!
+ * \brief Post-processing for rendering content.
+ * \param[in] handle Buffer handle
+ * \return 0 if succeed or errno < 0
+ * \see livebox_support_hw_buffer
+ */
+extern int livebox_buffer_post_render(struct livebox_buffer *handle);
 
 #ifdef __cplusplus
 }

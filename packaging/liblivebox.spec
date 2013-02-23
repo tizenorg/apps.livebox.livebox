@@ -1,6 +1,6 @@
 Name: liblivebox
 Summary: Library for the development of a livebox 
-Version: 0.1.14
+Version: 0.1.15
 Release: 1
 Group: main/app
 License: Flora License
@@ -9,6 +9,7 @@ BuildRequires: cmake, gettext-tools, coreutils
 BuildRequires: pkgconfig(dlog)
 BuildRequires: pkgconfig(livebox-service)
 BuildRequires: pkgconfig(provider)
+BuildRequires: pkgconfig(elementary)
 
 %description
 Livebox development library
