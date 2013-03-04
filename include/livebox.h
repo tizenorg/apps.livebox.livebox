@@ -40,6 +40,7 @@ extern const int USE_NET; /*!< Using network */
 extern const int LB_SYS_EVENT_FONT_CHANGED; /*!< System font is changed */
 extern const int LB_SYS_EVENT_LANG_CHANGED; /*!< System language is changed */
 extern const int LB_SYS_EVENT_TIME_CHANGED; /*!< System time is changed */
+extern const int LB_SYS_EVENT_REGION_CHANGED; /*!< Region changed */
 extern const int LB_SYS_EVENT_PAUSED;
 extern const int LB_SYS_EVENT_RESUMED;
 
