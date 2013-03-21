@@ -623,7 +623,6 @@ EAPI int livebox_sync_buffer(struct livebox_buffer *handle)
 		return -EINVAL;
 	}
 
-	DbgPrint("Sync buffer\n");
 	provider_buffer_sync(handle);
 
 	if (user_data->is_pd) {
