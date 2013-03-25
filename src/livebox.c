@@ -1,5 +1,5 @@
 /*
- * Copyright 2012  Samsung Electronics Co., Ltd
+ * Copyright 2013  Samsung Electronics Co., Ltd
  *
  * Licensed under the Flora License, Version 1.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,6 +24,7 @@
 #include <livebox-service.h>
 #include <provider.h>
 #include <provider_buffer.h>
+#include <livebox-errno.h>
 
 #include "debug.h"
 #include "livebox.h"
@@ -131,7 +132,7 @@ EAPI int livebox_desc_close(struct livebox_desc *handle)
 	struct block *block;
 
 	if (!handle)
-		return -EINVAL;
+		return LB_STATUS_ERROR_INVALID;
 
 	DbgPrint("Close and flush\n");
 	dlist_foreach_safe(handle->block_list, l, n, block) {
@@ -183,7 +184,7 @@ EAPI int livebox_desc_close(struct livebox_desc *handle)
 
 	fclose(handle->fp);
 	free(handle);
-	return 0;
+	return LB_STATUS_SUCCESS;
 }
 
 EAPI int livebox_desc_set_category(struct livebox_desc *handle, const char *id, const char *category)
@@ -191,23 +192,23 @@ EAPI int livebox_desc_set_category(struct livebox_desc *handle, const char *id, 
 	struct block *block;
 
 	if (!handle || !category)
-		return -EINVAL;
+		return LB_STATUS_ERROR_INVALID;
 
 	block = calloc(1, sizeof(*block));
 	if (!block)
-		return -ENOMEM;
+		return LB_STATUS_ERROR_MEMORY;
 
 	block->type = strdup(LB_DESC_TYPE_INFO);
 	if (!block->type) {
 		free(block);
-		return -ENOMEM;
+		return LB_STATUS_ERROR_MEMORY;
 	}
 
 	block->part = strdup("category");
 	if (!block->part) {
 		free(block->type);
 		free(block);
-		return -ENOMEM;
+		return LB_STATUS_ERROR_MEMORY;
 	}
 
 	block->data = strdup(category);
@@ -215,7 +216,7 @@ EAPI int livebox_desc_set_category(struct livebox_desc *handle, const char *id, 
 		free(block->type);
 		free(block->part);
 		free(block);
-		return -ENOMEM;
+		return LB_STATUS_ERROR_MEMORY;
 	}
 
 	if (id) {
@@ -225,7 +226,7 @@ EAPI int livebox_desc_set_category(struct livebox_desc *handle, const char *id, 
 			free(block->type);
 			free(block->part);
 			free(block);
-			return -ENOMEM;
+			return LB_STATUS_ERROR_MEMORY;
 		}
 	}
 
@@ -240,23 +241,23 @@ EAPI int livebox_desc_set_size(struct livebox_desc *handle, const char *id, int 
 	char buffer[BUFSIZ];
 
 	if (!handle)
-		return -EINVAL;
+		return LB_STATUS_ERROR_INVALID;
 
 	block = calloc(1, sizeof(*block));
 	if (!block)
-		return -ENOMEM;
+		return LB_STATUS_ERROR_MEMORY;
 
 	block->type = strdup(LB_DESC_TYPE_INFO);
 	if (!block->type) {
 		free(block);
-		return -ENOMEM;
+		return LB_STATUS_ERROR_MEMORY;
 	}
 
 	block->part = strdup("size");
 	if (!block->part) {
 		free(block->type);
 		free(block);
-		return -ENOMEM;
+		return LB_STATUS_ERROR_MEMORY;
 	}
 
 	if (id) {
@@ -265,7 +266,7 @@ EAPI int livebox_desc_set_size(struct livebox_desc *handle, const char *id, int 
 			free(block->part);
 			free(block->type);
 			free(block);
-			return -ENOMEM;
+			return LB_STATUS_ERROR_MEMORY;
 		}
 	}
 
@@ -275,7 +276,7 @@ EAPI int livebox_desc_set_size(struct livebox_desc *handle, const char *id, int 
 		free(block->part);
 		free(block->type);
 		free(block);
-		return -ENOMEM;
+		return LB_STATUS_ERROR_MEMORY;
 	}
 
 	block->idx = handle->last_idx++;
@@ -346,26 +347,26 @@ EAPI int livebox_desc_set_id(struct livebox_desc *handle, int idx, const char *i
 		if (block->idx == idx) {
 			if (strcasecmp(block->type, LB_DESC_TYPE_SCRIPT)) {
 				ErrPrint("Invalid block is used\n");
-				return -EINVAL;
+				return LB_STATUS_ERROR_INVALID;
 			}
 
 			free(block->target_id);
 			block->target_id = NULL;
 
 			if (!id || !strlen(id))
-				return 0;
+				return LB_STATUS_SUCCESS;
 
 			block->target_id = strdup(id);
 			if (!block->target_id) {
 				ErrPrint("Heap: %s\n", strerror(errno));
-				return -ENOMEM;
+				return LB_STATUS_ERROR_MEMORY;
 			}
 
-			return 0;
+			return LB_STATUS_SUCCESS;
 		}
 	}
 
-	return -ENOENT;
+	return LB_STATUS_ERROR_NOT_EXIST;
 }
 
 /*!
@@ -376,7 +377,7 @@ EAPI int livebox_desc_add_block(struct livebox_desc *handle, const char *id, con
 	struct block *block;
 
 	if (!handle || !type)
-		return -EINVAL;
+		return LB_STATUS_ERROR_INVALID;
 
 	if (!part)
 		part = "";
@@ -385,50 +386,57 @@ EAPI int livebox_desc_add_block(struct livebox_desc *handle, const char *id, con
 		data = "";
 
 	block = calloc(1, sizeof(*block));
-	if (!block)
-		return -ENOMEM;
+	if (!block) {
+		ErrPrint("Heap: %s\n", strerror(errno));
+		return LB_STATUS_ERROR_MEMORY;
+	}
 
 	block->type = strdup(type);
 	if (!block->type) {
+		ErrPrint("Heap: %s\n", strerror(errno));
 		free(block);
-		return -ENOMEM;
+		return LB_STATUS_ERROR_MEMORY;
 	}
 
 	block->part = strdup(part);
 	if (!block->part) {
+		ErrPrint("Heap: %s\n", strerror(errno));
 		free(block->type);
 		free(block);
-		return -ENOMEM;
+		return LB_STATUS_ERROR_MEMORY;
 	}
 
 	block->data = strdup(data);
 	if (!block->data) {
+		ErrPrint("Heap: %s\n", strerror(errno));
 		free(block->type);
 		free(block->part);
 		free(block);
-		return -ENOMEM;
+		return LB_STATUS_ERROR_MEMORY;
 	}
 
 	if (option) {
 		block->option = strdup(option);
 		if (!block->option) {
+			ErrPrint("Heap: %s\n", strerror(errno));
 			free(block->data);
 			free(block->type);
 			free(block->part);
 			free(block);
-			return -ENOMEM;
+			return LB_STATUS_ERROR_MEMORY;
 		}
 	}
 
 	if (id) {
 		block->id = strdup(id);
 		if (!block->id) {
+			ErrPrint("Heap: %s\n", strerror(errno));
 			free(block->option);
 			free(block->data);
 			free(block->type);
 			free(block->part);
 			free(block);
-			return -ENOMEM;
+			return LB_STATUS_ERROR_MEMORY;
 		}
 	}
 
@@ -452,11 +460,11 @@ EAPI int livebox_desc_del_block(struct livebox_desc *handle, int idx)
 			free(block->id);
 			free(block->target_id);
 			free(block);
-			return 0;
+			return LB_STATUS_SUCCESS;
 		}
 	}
 
-	return -ENOENT;
+	return LB_STATUS_ERROR_NOT_EXIST;
 }
 
 EAPI struct livebox_buffer *livebox_acquire_buffer(const char *filename, int is_pd, int width, int height, int (*handler)(struct livebox_buffer *, enum buffer_event, double, double, double, void *), void *data)
@@ -513,14 +521,14 @@ EAPI int livebox_request_update(const char *filename)
 
 	if (!filename) {
 		ErrPrint("Invalid argument\n");
-		return -EINVAL;
+		return LB_STATUS_ERROR_INVALID;
 	}
 
 	uri_len = strlen(filename) + strlen(FILE_SCHEMA) + 1;
 	uri = malloc(uri_len);
 	if (!uri) {
 		ErrPrint("Heap: %s\n", strerror(errno));
-		return -ENOMEM;
+		return LB_STATUS_ERROR_MEMORY;
 	}
 
 	snprintf(uri, uri_len, FILE_SCHEMA "%s", filename);
@@ -539,7 +547,7 @@ EAPI int livebox_release_buffer(struct livebox_buffer *handle)
 	struct livebox_buffer_data *user_data;
 
 	if (!handle)
-		return -EINVAL;
+		return LB_STATUS_ERROR_INVALID;
 
 	user_data = provider_buffer_user_data(handle);
 	if (user_data) {
@@ -585,7 +593,7 @@ EAPI void *livebox_ref_buffer(struct livebox_buffer *handle)
 EAPI int livebox_unref_buffer(void *buffer)
 {
 	if (!buffer)
-		return -EINVAL;
+		return LB_STATUS_ERROR_INVALID;
 
 	DbgPrint("Unref buffer\n");
 	return provider_buffer_unref(buffer);
@@ -598,29 +606,29 @@ EAPI int livebox_sync_buffer(struct livebox_buffer *handle)
 	const char *id;
 
 	if (!handle)
-		return -EINVAL;
+		return LB_STATUS_ERROR_INVALID;
 
 	user_data = provider_buffer_user_data(handle);
 	if (!user_data) {
 		ErrPrint("Invalid buffer\n");
-		return -EINVAL;
+		return LB_STATUS_ERROR_INVALID;
 	}
 
 	if (user_data->accelerated) {
 		DbgPrint("H/W Buffer allocated. skip the sync buffer\n");
-		return 0;
+		return LB_STATUS_SUCCESS;
 	}
 
 	pkgname = provider_buffer_pkgname(handle);
 	if (!pkgname) {
 		ErrPrint("Invalid buffer handler\n");
-		return -EINVAL;
+		return LB_STATUS_ERROR_INVALID;
 	}
 
 	id = provider_buffer_id(handle);
 	if (!id) {
 		ErrPrint("Invalid buffer handler\n");
-		return -EINVAL;
+		return LB_STATUS_ERROR_INVALID;
 	}
 
 	provider_buffer_sync(handle);
@@ -639,13 +647,14 @@ EAPI int livebox_sync_buffer(struct livebox_buffer *handle)
 		if (provider_send_updated(pkgname, id, w, h, -1.0f, NULL, NULL) < 0)
 			ErrPrint("Failed to send updated (%s)\n", id);
 	}
-	return 0;
+
+	return LB_STATUS_SUCCESS;
 }
 
 EAPI int livebox_support_hw_buffer(struct livebox_buffer *handle)
 {
 	if (!handle)
-		return -EINVAL;
+		return LB_STATUS_ERROR_INVALID;
 
 	return provider_buffer_pixmap_is_support_hw(handle);
 }
@@ -656,11 +665,11 @@ EAPI int livebox_create_hw_buffer(struct livebox_buffer *handle)
 	int ret;
 
 	if (!handle)
-		return -EINVAL;
+		return LB_STATUS_ERROR_INVALID;
 
 	user_data = provider_buffer_user_data(handle);
 	if (!user_data)
-		return -EINVAL;
+		return LB_STATUS_ERROR_INVALID;
 
 	if (user_data->accelerated)
 		return -EALREADY;
@@ -674,11 +683,11 @@ EAPI int livebox_destroy_hw_buffer(struct livebox_buffer *handle)
 {
 	struct livebox_buffer_data *user_data;
 	if (!handle)
-		return -EINVAL;
+		return LB_STATUS_ERROR_INVALID;
 
 	user_data = provider_buffer_user_data(handle);
 	if (!user_data || !user_data->accelerated)
-		return -EINVAL;
+		return LB_STATUS_ERROR_INVALID;
 
 	user_data->accelerated = 0;
 
@@ -694,7 +703,7 @@ EAPI void *livebox_buffer_hw_buffer(struct livebox_buffer *handle)
 
 	user_data = provider_buffer_user_data(handle);
 	if (!user_data || !user_data->accelerated)
-		return -EINVAL;
+		return NULL;
 
 	return provider_buffer_pixmap_hw_addr(handle);
 }
@@ -704,14 +713,14 @@ EAPI int livebox_buffer_pre_render(struct livebox_buffer *handle)
 	struct livebox_buffer_data *user_data;
 
 	if (!handle)
-		return -EINVAL;
+		return LB_STATUS_ERROR_INVALID;
 
 	user_data = provider_buffer_user_data(handle);
 	if (!user_data)
-		return -EINVAL;
+		return LB_STATUS_ERROR_INVALID;
 
 	if (!user_data->accelerated)
-		return 0;
+		return LB_STATUS_SUCCESS;
 
 	/*!
 	 * \note
@@ -728,25 +737,25 @@ EAPI int livebox_buffer_post_render(struct livebox_buffer *handle)
 	struct livebox_buffer_data *user_data;
 
 	if (!handle)
-		return -EINVAL;
+		return LB_STATUS_ERROR_INVALID;
 
 	user_data = provider_buffer_user_data(handle);
 	if (!user_data)
-		return -EINVAL;
+		return LB_STATUS_ERROR_INVALID;
 
 	if (!user_data->accelerated)
-		return 0;
+		return LB_STATUS_SUCCESS;
 
 	pkgname = provider_buffer_pkgname(handle);
 	if (!pkgname) {
 		ErrPrint("Invalid buffer handle\n");
-		return -EINVAL;
+		return LB_STATUS_ERROR_INVALID;
 	}
 
 	id = provider_buffer_id(handle);
 	if (!id) {
 		ErrPrint("Invalid buffer handler\n");
-		return -EINVAL;
+		return LB_STATUS_ERROR_INVALID;
 	}
 
 	ret = provider_buffer_post_render(handle);
@@ -770,7 +779,7 @@ EAPI int livebox_buffer_post_render(struct livebox_buffer *handle)
 			ErrPrint("Failed to send updated (%s)\n", id);
 	}
 
-	return 0;
+	return LB_STATUS_SUCCESS;
 }
 
 /* End of a file */

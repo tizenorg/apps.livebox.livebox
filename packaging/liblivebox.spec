@@ -1,8 +1,8 @@
 Name: liblivebox
 Summary: Library for the development of a livebox 
-Version: 0.1.17
+Version: 0.1.19
 Release: 1
-Group: main/app
+Group: HomeTF/Livebox
 License: Flora License
 Source0: %{name}-%{version}.tar.gz
 BuildRequires: cmake, gettext-tools, coreutils
