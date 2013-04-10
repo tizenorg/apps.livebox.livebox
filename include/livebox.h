@@ -21,6 +21,8 @@
 extern "C" {
 #endif
 
+#include <Evas.h>
+
 struct livebox_buffer; /* Defined by provider */
 
 /*!
@@ -51,6 +53,7 @@ extern const int LB_SYS_EVENT_RESUMED;
 #define LB_DESC_TYPE_INFO "info"
 #define LB_DESC_TYPE_DRAG "drag"
 #define LB_DESC_TYPE_SCRIPT "script"
+#define LB_DESC_TYPE_ACCESS "access"
 
 /*!
  * \brief
@@ -280,6 +283,15 @@ extern int livebox_buffer_pre_render(struct livebox_buffer *handle);
  */
 extern int livebox_buffer_post_render(struct livebox_buffer *handle);
 
+/*
+extern Evas_Object *livebox_snapshot_window_add(const char *id, int size_type);
+extern int livebox_snapshot_window_flush(Evas_Object *snapshot_win, double timeout, void (*flush_cb)(Evas_Object *snapshot_window, const char *id, int status, void *data), void *data);
+extern int livebox_snapshot_window_del(Evas_Object *snapshot_win);
+extern Evas_Object *livebox_virtual_window_add(const char *id, int width, int height);
+extern int livebox_virtual_window_del(Evas_Object *virtual_win);
+*/
+
+// End of a file
 #ifdef __cplusplus
 }
 #endif

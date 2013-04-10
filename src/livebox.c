@@ -19,6 +19,7 @@
 #include <stdlib.h> /* malloc */
 #include <string.h> /* strdup */
 #include <libgen.h>
+#include <unistd.h> /* access */
 
 #include <dlog.h>
 #include <livebox-service.h>
@@ -31,7 +32,7 @@
 #include "dlist.h"
 #include "util.h"
 
-#define EAPI __attribute__((visibility("default")))
+#define PUBLIC __attribute__((visibility("default")))
 
 #define FILE_SCHEMA	"file://"
 
@@ -67,23 +68,23 @@ struct livebox_buffer_data {
 	int accelerated;
 };
 
-EAPI const int DONE = 0x00;
-EAPI const int OUTPUT_UPDATED = 0x02;
-EAPI const int USE_NET = 0x04;
+PUBLIC const int DONE = 0x00;
+PUBLIC const int OUTPUT_UPDATED = 0x02;
+PUBLIC const int USE_NET = 0x04;
 
-EAPI const int NEED_TO_SCHEDULE = 0x01;
-EAPI const int NEED_TO_CREATE = 0x01;
-EAPI const int NEED_TO_DESTROY = 0x01;
-EAPI const int NEED_TO_UPDATE = 0x01;
+PUBLIC const int NEED_TO_SCHEDULE = 0x01;
+PUBLIC const int NEED_TO_CREATE = 0x01;
+PUBLIC const int NEED_TO_DESTROY = 0x01;
+PUBLIC const int NEED_TO_UPDATE = 0x01;
 
-EAPI const int LB_SYS_EVENT_FONT_CHANGED = 0x01;
-EAPI const int LB_SYS_EVENT_LANG_CHANGED = 0x02;
-EAPI const int LB_SYS_EVENT_TIME_CHANGED = 0x04;
-EAPI const int LB_SYS_EVENT_REGION_CHANGED = 0x08;
-EAPI const int LB_SYS_EVENT_PAUSED = 0x0100;
-EAPI const int LB_SYS_EVENT_RESUMED = 0x0200;
+PUBLIC const int LB_SYS_EVENT_FONT_CHANGED = 0x01;
+PUBLIC const int LB_SYS_EVENT_LANG_CHANGED = 0x02;
+PUBLIC const int LB_SYS_EVENT_TIME_CHANGED = 0x04;
+PUBLIC const int LB_SYS_EVENT_REGION_CHANGED = 0x08;
+PUBLIC const int LB_SYS_EVENT_PAUSED = 0x0100;
+PUBLIC const int LB_SYS_EVENT_RESUMED = 0x0200;
 
-EAPI struct livebox_desc *livebox_desc_open(const char *filename, int for_pd)
+PUBLIC struct livebox_desc *livebox_desc_open(const char *filename, int for_pd)
 {
 	struct livebox_desc *handle;
 	char *new_fname;
@@ -113,8 +114,11 @@ EAPI struct livebox_desc *livebox_desc_open(const char *filename, int for_pd)
 		}
 	}
 
-	DbgPrint("Open a new file: %s\n", new_fname);
-	handle->fp = fopen(new_fname, "w+t");
+	DbgPrint("Open a file %s with merge mode %s\n",
+				new_fname,
+				access(new_fname, F_OK) == 0 ? "enabled" : "disabled");
+
+	handle->fp = fopen(new_fname, "at");
 	free(new_fname);
 	if (!handle->fp) {
 		ErrPrint("Failed to open a file: %s\n", strerror(errno));
@@ -125,7 +129,7 @@ EAPI struct livebox_desc *livebox_desc_open(const char *filename, int for_pd)
 	return handle;
 }
 
-EAPI int livebox_desc_close(struct livebox_desc *handle)
+PUBLIC int livebox_desc_close(struct livebox_desc *handle)
 {
 	struct dlist *l;
 	struct dlist *n;
@@ -187,7 +191,7 @@ EAPI int livebox_desc_close(struct livebox_desc *handle)
 	return LB_STATUS_SUCCESS;
 }
 
-EAPI int livebox_desc_set_category(struct livebox_desc *handle, const char *id, const char *category)
+PUBLIC int livebox_desc_set_category(struct livebox_desc *handle, const char *id, const char *category)
 {
 	struct block *block;
 
@@ -235,7 +239,7 @@ EAPI int livebox_desc_set_category(struct livebox_desc *handle, const char *id, 
 	return block->idx;
 }
 
-EAPI int livebox_desc_set_size(struct livebox_desc *handle, const char *id, int w, int h)
+PUBLIC int livebox_desc_set_size(struct livebox_desc *handle, const char *id, int w, int h)
 {
 	struct block *block;
 	char buffer[BUFSIZ];
@@ -284,7 +288,7 @@ EAPI int livebox_desc_set_size(struct livebox_desc *handle, const char *id, int 
 	return block->idx;
 }
 
-EAPI char *livebox_util_nl2br(const char *str)
+PUBLIC char *livebox_util_nl2br(const char *str)
 {
 	int len;
 	register int i;
@@ -338,7 +342,7 @@ EAPI char *livebox_util_nl2br(const char *str)
 	return ret;
 }
 
-EAPI int livebox_desc_set_id(struct livebox_desc *handle, int idx, const char *id)
+PUBLIC int livebox_desc_set_id(struct livebox_desc *handle, int idx, const char *id)
 {
 	struct dlist *l;
 	struct block *block;
@@ -372,7 +376,7 @@ EAPI int livebox_desc_set_id(struct livebox_desc *handle, int idx, const char *i
 /*!
  * \return idx
  */
-EAPI int livebox_desc_add_block(struct livebox_desc *handle, const char *id, const char *type, const char *part, const char *data, const char *option)
+PUBLIC int livebox_desc_add_block(struct livebox_desc *handle, const char *id, const char *type, const char *part, const char *data, const char *option)
 {
 	struct block *block;
 
@@ -445,7 +449,7 @@ EAPI int livebox_desc_add_block(struct livebox_desc *handle, const char *id, con
 	return block->idx;
 }
 
-EAPI int livebox_desc_del_block(struct livebox_desc *handle, int idx)
+PUBLIC int livebox_desc_del_block(struct livebox_desc *handle, int idx)
 {
 	struct dlist *l;
 	struct block *block;
@@ -467,7 +471,7 @@ EAPI int livebox_desc_del_block(struct livebox_desc *handle, int idx)
 	return LB_STATUS_ERROR_NOT_EXIST;
 }
 
-EAPI struct livebox_buffer *livebox_acquire_buffer(const char *filename, int is_pd, int width, int height, int (*handler)(struct livebox_buffer *, enum buffer_event, double, double, double, void *), void *data)
+PUBLIC struct livebox_buffer *livebox_acquire_buffer(const char *filename, int is_pd, int width, int height, int (*handler)(struct livebox_buffer *, enum buffer_event, double, double, double, void *), void *data)
 {
 	struct livebox_buffer_data *user_data;
 	const char *pkgname;
@@ -513,7 +517,7 @@ EAPI struct livebox_buffer *livebox_acquire_buffer(const char *filename, int is_
 	return handle;
 }
 
-EAPI int livebox_request_update(const char *filename)
+PUBLIC int livebox_request_update(const char *filename)
 {
 	int uri_len;
 	char *uri;
@@ -537,12 +541,12 @@ EAPI int livebox_request_update(const char *filename)
 	return ret;
 }
 
-EAPI unsigned long livebox_pixmap_id(struct livebox_buffer *handle)
+PUBLIC unsigned long livebox_pixmap_id(struct livebox_buffer *handle)
 {
 	return provider_buffer_pixmap_id(handle);
 }
 
-EAPI int livebox_release_buffer(struct livebox_buffer *handle)
+PUBLIC int livebox_release_buffer(struct livebox_buffer *handle)
 {
 	struct livebox_buffer_data *user_data;
 
@@ -559,7 +563,7 @@ EAPI int livebox_release_buffer(struct livebox_buffer *handle)
 	return provider_buffer_release(handle);
 }
 
-EAPI void *livebox_ref_buffer(struct livebox_buffer *handle)
+PUBLIC void *livebox_ref_buffer(struct livebox_buffer *handle)
 {
 	struct livebox_buffer_data *user_data;
 	void *data;
@@ -590,7 +594,7 @@ EAPI void *livebox_ref_buffer(struct livebox_buffer *handle)
 	return data;
 }
 
-EAPI int livebox_unref_buffer(void *buffer)
+PUBLIC int livebox_unref_buffer(void *buffer)
 {
 	if (!buffer)
 		return LB_STATUS_ERROR_INVALID;
@@ -599,7 +603,7 @@ EAPI int livebox_unref_buffer(void *buffer)
 	return provider_buffer_unref(buffer);
 }
 
-EAPI int livebox_sync_buffer(struct livebox_buffer *handle)
+PUBLIC int livebox_sync_buffer(struct livebox_buffer *handle)
 {
 	struct livebox_buffer_data *user_data;
 	const char *pkgname;
@@ -651,7 +655,7 @@ EAPI int livebox_sync_buffer(struct livebox_buffer *handle)
 	return LB_STATUS_SUCCESS;
 }
 
-EAPI int livebox_support_hw_buffer(struct livebox_buffer *handle)
+PUBLIC int livebox_support_hw_buffer(struct livebox_buffer *handle)
 {
 	if (!handle)
 		return LB_STATUS_ERROR_INVALID;
@@ -659,7 +663,7 @@ EAPI int livebox_support_hw_buffer(struct livebox_buffer *handle)
 	return provider_buffer_pixmap_is_support_hw(handle);
 }
 
-EAPI int livebox_create_hw_buffer(struct livebox_buffer *handle)
+PUBLIC int livebox_create_hw_buffer(struct livebox_buffer *handle)
 {
 	struct livebox_buffer_data *user_data;
 	int ret;
@@ -679,7 +683,7 @@ EAPI int livebox_create_hw_buffer(struct livebox_buffer *handle)
 	return ret;
 }
 
-EAPI int livebox_destroy_hw_buffer(struct livebox_buffer *handle)
+PUBLIC int livebox_destroy_hw_buffer(struct livebox_buffer *handle)
 {
 	struct livebox_buffer_data *user_data;
 	if (!handle)
@@ -694,7 +698,7 @@ EAPI int livebox_destroy_hw_buffer(struct livebox_buffer *handle)
 	return provider_buffer_pixmap_destroy_hw(handle);
 }
 
-EAPI void *livebox_buffer_hw_buffer(struct livebox_buffer *handle)
+PUBLIC void *livebox_buffer_hw_buffer(struct livebox_buffer *handle)
 {
 	struct livebox_buffer_data *user_data;
 
@@ -708,7 +712,7 @@ EAPI void *livebox_buffer_hw_buffer(struct livebox_buffer *handle)
 	return provider_buffer_pixmap_hw_addr(handle);
 }
 
-EAPI int livebox_buffer_pre_render(struct livebox_buffer *handle)
+PUBLIC int livebox_buffer_pre_render(struct livebox_buffer *handle)
 {
 	struct livebox_buffer_data *user_data;
 
@@ -729,7 +733,7 @@ EAPI int livebox_buffer_pre_render(struct livebox_buffer *handle)
 	return provider_buffer_pre_render(handle);
 }
 
-EAPI int livebox_buffer_post_render(struct livebox_buffer *handle)
+PUBLIC int livebox_buffer_post_render(struct livebox_buffer *handle)
 {
 	int ret;
 	const char *pkgname;

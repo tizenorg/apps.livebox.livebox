@@ -18,6 +18,8 @@ pkg_check_modules(pkgs REQUIRED
 	dlog
 	livebox-service
 	provider
+	evas
+	ecore
 )
 
 FOREACH(flag ${pkgs_CFLAGS})
