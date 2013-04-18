@@ -45,6 +45,7 @@ extern const int LB_SYS_EVENT_TIME_CHANGED; /*!< System time is changed */
 extern const int LB_SYS_EVENT_REGION_CHANGED; /*!< Region changed */
 extern const int LB_SYS_EVENT_PAUSED;
 extern const int LB_SYS_EVENT_RESUMED;
+extern const int LB_SYS_EVENT_MMC_STATUS_CHANGED; /*!< MMC Status change event */
 
 #define LB_DESC_TYPE_COLOR "color"
 #define LB_DESC_TYPE_TEXT "text"

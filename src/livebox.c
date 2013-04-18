@@ -83,6 +83,7 @@ PUBLIC const int LB_SYS_EVENT_TIME_CHANGED = 0x04;
 PUBLIC const int LB_SYS_EVENT_REGION_CHANGED = 0x08;
 PUBLIC const int LB_SYS_EVENT_PAUSED = 0x0100;
 PUBLIC const int LB_SYS_EVENT_RESUMED = 0x0200;
+PUBLIC const int LB_SYS_EVENT_MMC_STATUS_CHANGED = 0x0400;
 
 PUBLIC struct livebox_desc *livebox_desc_open(const char *filename, int for_pd)
 {

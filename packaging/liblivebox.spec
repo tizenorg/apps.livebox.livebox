@@ -1,6 +1,6 @@
 Name: liblivebox
 Summary: Library for the development of a livebox 
-Version: 0.2.1
+Version: 0.2.2
 Release: 1
 Group: HomeTF/Livebox
 License: Flora License
