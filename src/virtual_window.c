@@ -1,3 +1,4 @@
+#include <Elementary.h>
 #include <Ecore_Evas.h>
 #include <Evas.h>
 
@@ -20,6 +21,8 @@ struct info {
 	struct livebox_buffer *handle; /*!< Livebox buffer handle */
 	Evas_Object *window; /*!< Parent evas object - WARN: Incompatible with the elm_win object */
 	int is_hw; /*!< 1 if a buffer is created on the H/W accelerated place or 0 */
+
+	Evas_Object *elm_parent;
 };
 
 /*!
@@ -28,6 +31,8 @@ struct info {
  */
 static int event_handler_cb(struct livebox_buffer *handler, enum buffer_event evt, double timestamp, double x, double y, void *data)
 {
+	Elm_Access_Action_Info *info;
+	Elm_Access_Action_Type action;
 	struct info *info = data;
 	Evas *e;
 	int ix;
@@ -70,9 +75,102 @@ static int event_handler_cb(struct livebox_buffer *handler, enum buffer_event ev
 		evas_event_feed_mouse_up(e, 1, EVAS_BUTTON_NONE, timestamp, NULL);
 		evas_event_feed_mouse_out(e, timestamp + 0.01f, NULL); /* + 0.1f just for fake event */
 		break;
+	case BUFFER_EVENT_HIGHLIGHT:
+		if (!info->elm_parent)
+			return LB_ACCESS_STATUS_ERROR;
+
+		action = ELM_ACCESS_ACTION_HIGHLIGHT;
+		info->x = x;
+		info->y = y;
+		ret = elm_access_action(info->elm_parent, action, info);
+		DbgPrint("ACCESS_HIGHLIGHT: %dx%d returns %d\n", x, y, ret);
+		ret = (ret == EINA_FALSE) ? LB_ACCESS_STATUS_ERROR : LB_ACCESS_STATUS_DONE;
+		break;
+	case BUFFER_EVENT_HIGHLIGHT_NEXT:
+		if (!info->elm_parent)
+			return LB_ACCESS_STATUS_ERROR;
+		action = ELM_ACCESS_ACTION_HIGHLIGHT_NEXT;
+		info->highlight_cycle = EINA_FALSE;
+		ret = elm_access_action(info->elm_parent, action, info);
+		DbgPrint("ACCESS_HIGHLIGHT_NEXT, returns %d\n", ret);
+		ret = (ret == EINA_FALSE) ? LB_ACCESS_STATUS_LAST : LB_ACCESS_STATUS_DONE;
+		break;
+	case BUFFER_EVENT_HIGHLIGHT_PREV:
+		if (!info->elm_parent)
+			return LB_ACCESS_STATUS_ERROR;
+		action = ELM_ACCESS_ACTION_HIGHLIGHT_PREV;
+		info->highlight_cycle = EINA_FALSE;
+		ret = elm_access_action(info->elm_parent, action, info);
+		DbgPrint("ACCESS_HIGHLIGHT_PREV, returns %d\n", ret);
+		ret = (ret == EINA_FALSE) ? LB_ACCESS_STATUS_FIRST : LB_ACCESS_STATUS_DONE;
+		break;
+	case BUFFER_EVENT_ACTIVATE:
+		if (!info->elm_parent)
+			return LB_ACCESS_STATUS_ERROR;
+		action = ELM_ACCESS_ACTION_ACTIVATE;
+		ret = elm_access_action(info->elm_parent, action, info);
+		DbgPrint("ACCESS_ACTIVATE, returns %d\n", ret);
+		ret = (ret == EINA_FALSE) ? LB_ACCESS_STATUS_ERROR : LB_ACCESS_STATUS_DONE;
+		break;
+	case BUFFER_EVENT_ACTION_UP:
+		if (!info->elm_parent)
+			return LB_ACCESS_STATUS_ERROR;
+		action = ELM_ACCESS_ACTION_UP;
+		ret = elm_access_action(info->elm_parent, action, info);
+		DbgPrint("ACCESS_ACTION(%d), returns %d\n", down, ret);
+		break;
+	case BUFFER_EVENT_ACTION_DOWN:
+		if (!info->elm_parent)
+			return LB_ACCESS_STATUS_ERROR;
+		action = ELM_ACCESS_ACTION_DOWN;
+		ret = elm_access_action(info->elm_parent, action, info);
+		DbgPrint("ACCESS_ACTION(%d), returns %d\n", down, ret);
+		ret = (ret == EINA_FALSE) ? LB_ACCESS_STATUS_ERROR : LB_ACCESS_STATUS_DONE;
+		break;
+	case BUFFER_EVENT_SCROLL_UP:
+		if (!info->elm_parent)
+			return LB_ACCESS_STATUS_ERROR;
+		action = ELM_ACCESS_ACTION_SCROLL;
+		info->x = ix;
+		info->y = iy;
+		info->mouse_type = 0;
+		ret = elm_access_action(info->elm_parent, action, info);
+		DbgPrint("ACCESS_HIGHLIGHT_SCROLL, returns %d\n", ret);
+		ret = (ret == EINA_FALSE) ? LB_ACCESS_STATUS_ERROR : LB_ACCESS_STATUS_DONE;
+		break;
+	case BUFFER_EVENT_SCROLL_MOVE:
+		if (!info->elm_parent)
+			return LB_ACCESS_STATUS_ERROR;
+		action = ELM_ACCESS_ACTION_SCROLL;
+		info->x = ix;
+		info->y = iy;
+		info->mouse_type = -1;
+		ret = elm_access_action(info->elm_parent, action, info);
+		DbgPrint("ACCESS_HIGHLIGHT_SCROLL, returns %d\n", ret);
+		ret = (ret == EINA_FALSE) ? LB_ACCESS_STATUS_ERROR : LB_ACCESS_STATUS_DONE;
+		break;
+	case BUFFER_EVENT_SCROLL_DOWN:
+		if (!info->elm_parent)
+			return LB_ACCESS_STATUS_ERROR;
+		action = ELM_ACCESS_ACTION_SCROLL;
+		info->x = ix;
+		info->y = iy;
+		info->mouse_type = 1;
+		ret = elm_access_action(info->elm_parent, action, info);
+		DbgPrint("ACCESS_HIGHLIGHT_SCROLL, returns %d\n", ret);
+		ret = (ret == EINA_FALSE) ? LB_ACCESS_STATUS_ERROR : LB_ACCESS_STATUS_DONE;
+		break;
+	case BUFFER_EVENT_UNHIGHLIGHT:
+		if (!info->elm_parent)
+			return LB_ACCESS_STATUS_ERROR;
+		action = ELM_ACCESS_ACTION_UNHIGHLIGHT;
+		ret = elm_access_action(info->elm_parent, action, info);
+		DbgPrint("ACCESS_UNHIGHLIGHT, returns %d\n", ret);
+		ret = (ret == EINA_FALSE) ? LB_ACCESS_STATUS_ERROR : LB_ACCESS_STATUS_DONE;
+		break;
 	default:
 		LOGD("Unhandled buffer event (%d)\n", evt);
-		break;
+		return -EINVAL;
 	}
 
 	return 0;
@@ -164,6 +262,8 @@ static void del_cb(void *data, Evas *e, Evas_Object *obj, void *event_info)
 	Ecore_Evas *ee;
 	struct info *info = data;
 
+	evas_object_del(obj, "info");
+
 	ee = ecore_evas_ecore_evas_get(e);
 	if (!ee)
 		return;
@@ -252,8 +352,23 @@ PUBLIC Evas_Object *livebox_virtual_window_add(const char *id, int width, int he
 	evas_object_color_set(info->window, 0, 0, 0, 0);
 	evas_object_event_callback_add(info->window, EVAS_CALLBACK_DEL, del_cb, info);
 	evas_object_event_callback_add(info->window, EVAS_CALLBACK_RESIZE, resize_cb, info);
+	evas_object_data_set(info->window, "info", info);
 
 	return info->window;
+}
+
+PUBLIC int livebox_virtual_window_set_parent_elm(Evas_Object *win, Evas_Object *parent_elm)
+{
+	struct info *info;
+	info = evas_object_data_get(win, "info");
+	if (!info)
+		return LB_STATUS_ERROR_INVALID;
+
+	if (info->parent_elm)
+		DbgPrint("Parent object will be replaced: %p\n", info->parent_elm);
+
+	info->parent_elm = parent_elm;
+	return 0;
 }
 
 PUBLIC int livebox_virtual_window_del(Evas_Object *virtual_win)
