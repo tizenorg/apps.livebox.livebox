@@ -66,6 +66,10 @@ struct livebox_desc {
 struct livebox_buffer_data {
 	int is_pd;
 	int accelerated;
+
+	/* for Buffer event wrapper */
+	int (*handler)(struct livebox_buffer *, enum buffer_event, double, double, double, void *);
+	void *cbdata;
 };
 
 PUBLIC const int DONE = 0x00;
@@ -472,6 +476,51 @@ PUBLIC int livebox_desc_del_block(struct livebox_desc *handle, int idx)
 	return LB_STATUS_ERROR_NOT_EXIST;
 }
 
+/*!
+ * \note
+ * The last "data" argument is same with "user_data" which is managed by "provider_set_user_data).
+ */
+static inline int event_handler_wrapper(struct livebox_buffer *buffer, enum buffer_event event, double timestamp, double x, double y, void *data)
+{
+	const char *pkgname;
+	const char *id;
+	struct livebox_buffer_data *cbdata = data;
+	int ret;
+
+	pkgname = provider_buffer_pkgname(buffer);
+	id = provider_buffer_pkgname(buffer);
+
+	ret = cbdata->handler(buffer, event, timestamp, x, y, cbdata->cbdata);
+
+	switch (event) {
+	case BUFFER_EVENT_HIGHLIGHT:
+	case BUFFER_EVENT_HIGHLIGHT_NEXT:
+	case BUFFER_EVENT_HIGHLIGHT_PREV:
+	case BUFFER_EVENT_ACTIVATE:
+	case BUFFER_EVENT_ACTION_UP:
+	case BUFFER_EVENT_ACTION_DOWN:
+	case BUFFER_EVENT_SCROLL_UP:
+	case BUFFER_EVENT_SCROLL_MOVE:
+	case BUFFER_EVENT_SCROLL_DOWN:
+	case BUFFER_EVENT_UNHIGHLIGHT:
+		if (ret < 0)
+			(void)provider_send_access_status(pkgname, id, LB_ACCESS_STATUS_ERROR);
+		else
+			(void)provider_send_access_status(pkgname, id, ret);
+		break;
+	default:
+		break;
+	}
+
+	return ret;
+}
+
+static inline int default_event_handler(struct livebox_buffer *buffer, enum buffer_event event, double timestamp, double x, double y, void *data)
+{
+	/* NOP */
+	return 0;
+}
+
 PUBLIC struct livebox_buffer *livebox_acquire_buffer(const char *filename, int is_pd, int width, int height, int (*handler)(struct livebox_buffer *, enum buffer_event, double, double, double, void *), void *data)
 {
 	struct livebox_buffer_data *user_data;
@@ -479,6 +528,7 @@ PUBLIC struct livebox_buffer *livebox_acquire_buffer(const char *filename, int i
 	struct livebox_buffer *handle;
 	char *uri;
 	int uri_len;
+	struct event_cbdata *cbdata;
 
 	if (!filename || !width || !height) {
 		ErrPrint("Invalid argument: %p(%dx%d)\n", filename, width, height);
@@ -492,6 +542,8 @@ PUBLIC struct livebox_buffer *livebox_acquire_buffer(const char *filename, int i
 	}
 
 	user_data->is_pd = is_pd;
+	user_data->handler = handler ? handler : default_event_handler;
+	user_data->cbdata = data;
 
 	uri_len = strlen(filename) + strlen(FILE_SCHEMA) + 1;
 	uri = malloc(uri_len);
@@ -510,9 +562,13 @@ PUBLIC struct livebox_buffer *livebox_acquire_buffer(const char *filename, int i
 		return NULL;
 	}
 
-	handle = provider_buffer_acquire((!!is_pd) ? TYPE_PD : TYPE_LB, pkgname, uri, width, height, sizeof(int), handler, data);
+	handle = provider_buffer_acquire((!!is_pd) ? TYPE_PD : TYPE_LB, pkgname, uri, width, height, sizeof(int), event_handler_wrapper, user_data);
 	DbgPrint("Acquire buffer for PD(%s), %s, %p\n", pkgname, uri, handle);
 	free(uri);
+	if (!handle) {
+		free(user_data);
+		return NULL;
+	}
 
 	(void)provider_buffer_set_user_data(handle, user_data);
 	return handle;
