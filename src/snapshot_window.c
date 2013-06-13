@@ -10,6 +10,18 @@
 #include "livebox.h"
 #include "debug.h"
 
+#if !defined(SECURE_LOGD)
+#define SECURE_LOGD LOGD
+#endif
+
+#if !defined(SECURE_LOGE)
+#define SECURE_LOGE LOGE
+#endif
+
+#if !defined(SECURE_LOGW)
+#define SECURE_LOGW LOGW
+#endif
+
 #define QUALITY_N_COMPRESS "quality=100 compress=1"
 #define PUBLIC __attribute__((visibility("default")))
 
@@ -78,18 +90,18 @@ static inline int flush_data_to_file(Evas *e, char *data, const char *filename, 
 
         if (evas_object_image_save(output, filename, NULL, QUALITY_N_COMPRESS) == EINA_FALSE) {
                 evas_object_del(output);
-		LOGD("Faield to save a captured image (%s)\n", filename);
+		SECURE_LOGD("Faield to save a captured image (%s)\n", filename);
                 return LB_STATUS_ERROR_IO;
         }
 
 	evas_object_del(output);
 
         if (access(filename, F_OK) != 0) {
-		LOGD("File %s is not found\n", filename);
+		SECURE_LOGD("File %s is not found\n", filename);
                 return LB_STATUS_ERROR_IO;
         }
 
-	LOGD("Flush data to a file (%s)\n", filename);
+	SECURE_LOGD("Flush data to a file (%s)\n", filename);
 	return LB_STATUS_SUCCESS;
 }
 
@@ -148,7 +160,7 @@ static void del_cb(void *data, Evas *e, Evas_Object *obj, void *event_info)
 	if (!info)
 		return;
 
-	LOGD("Delete object (%s)\n", info->id);
+	SECURE_LOGD("Delete object (%s)\n", info->id);
 
 	if (info->flush_cb) {
 		info->flush_cb(obj, info->id, LB_STATUS_ERROR_CANCEL, info->data);
@@ -273,7 +285,7 @@ static Eina_Bool snapshot_cb(void *data)
 
 		ecore_evas_geometry_get(ee, NULL, NULL, &w, &h);
 
-		LOGD("Flush size: %dx%d\n", w, h);
+		SECURE_LOGD("Flush size: %dx%d\n", w, h);
 		status = flush_to_file(canvas, info->id, w, h);
 
 		flush_cb(snapshot_win, info->id, status, info->data);
@@ -377,7 +389,7 @@ static void resize_cb(void *data, Evas *e, Evas_Object *obj, void *event_info)
 	ecore_evas_geometry_get(ee, NULL, NULL, &w, &h);
 	evas_object_geometry_get(obj, NULL, NULL, &ow, &oh);
 	if (ow == w && oh == h) {
-		LOGD("Size is not changed: %dx%d\n", w, h);
+		SECURE_LOGD("Size is not changed: %dx%d\n", w, h);
 		return;
 	}
 
@@ -386,7 +398,7 @@ static void resize_cb(void *data, Evas *e, Evas_Object *obj, void *event_info)
 	 * Try to resize the canvas too.
 	 */
 	ecore_evas_resize(ee, w, h);
-	LOGD("Canvas is resized to %dx%d\n", w, h);
+	SECURE_LOGD("Canvas is resized to %dx%d\n", w, h);
 }
 
 
@@ -437,7 +449,7 @@ PUBLIC Evas_Object *livebox_snapshot_window_add(const char *id, int size_type)
 		return NULL;
 	}
 
-	LOGD("Add new window %dx%d\n", w, h);
+	SECURE_LOGD("Add new window %dx%d\n", w, h);
 	evas_object_event_callback_add(snapshot_win, EVAS_CALLBACK_DEL, del_cb, NULL);
 	evas_object_event_callback_add(snapshot_win, EVAS_CALLBACK_RESIZE, resize_cb, NULL);
 	evas_object_resize(snapshot_win, w, h);

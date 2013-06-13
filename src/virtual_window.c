@@ -8,6 +8,18 @@
 #include <livebox-service.h>
 
 #include "livebox.h"
+#if !defined(SECURE_LOGD)
+#define SECURE_LOGD LOGD
+#endif
+
+#if !defined(SECURE_LOGE)
+#define SECURE_LOGE LOGE
+#endif
+
+#if !defined(SECURE_LOGW)
+#define SECURE_LOGW LOGW
+#endif
+
 
 #define IS_PD 1
 
@@ -258,7 +270,7 @@ static void resize_cb(void *data, Evas *e, Evas_Object *obj, void *event_info)
 		return;
 
 	evas_object_geometry_get(obj, NULL, NULL, &info->width, &info->height);
-	LOGD("Resize to %dx%d\n", info->width, info->height);
+	SECURE_LOGD("Resize to %dx%d\n", info->width, info->height);
 	/*!
 	 * Box(parent object) is resized.
 	 * Try to resize the canvas too.
