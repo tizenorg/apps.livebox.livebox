@@ -143,44 +143,28 @@ PUBLIC int livebox_desc_close(struct livebox_desc *handle)
 	if (!handle)
 		return LB_STATUS_ERROR_INVALID;
 
-	DbgPrint("Close and flush\n");
 	dlist_foreach_safe(handle->block_list, l, n, block) {
 		handle->block_list = dlist_remove(handle->block_list, l);
 
-		DbgPrint("{\n");
 		fprintf(handle->fp, "{\n");
-		if (block->type) {
+		if (block->type)
 			fprintf(handle->fp, "type=%s\n", block->type);
-			DbgPrint("type=%s\n", block->type);
-		}
 
-		if (block->part) {
+		if (block->part)
 			fprintf(handle->fp, "part=%s\n", block->part);
-			DbgPrint("part=%s\n", block->part);
-		}
 
-		if (block->data) {
+		if (block->data)
 			fprintf(handle->fp, "data=%s\n", block->data);
-			DbgPrint("data=%s\n", block->data);
-		}
 
-		if (block->option) {
+		if (block->option)
 			fprintf(handle->fp, "option=%s\n", block->option);
-			DbgPrint("option=%s\n", block->option);
-		}
 
-		if (block->id) {
+		if (block->id)
 			fprintf(handle->fp, "id=%s\n", block->id);
-			DbgPrint("id=%s\n", block->id);
-		}
 
-		if (block->target_id) {
+		if (block->target_id)
 			fprintf(handle->fp, "target=%s\n", block->target_id);
-			DbgPrint("target=%s\n", block->target_id);
-		}
-
 		fprintf(handle->fp, "}\n");
-		DbgPrint("}\n");
 
 		free(block->type);
 		free(block->part);
