@@ -144,6 +144,14 @@ extern int livebox_desc_add_block(struct livebox_desc *handle, const char *id, c
 extern int livebox_desc_del_block(struct livebox_desc *handle, int idx);
 
 /*!
+ * \brief Notify the updated content to the provider.
+ * \param[in] id Instance Id
+ * \param[in] is_pd 1 if call for PD or 0(LB).
+ * \return int
+ */
+extern int livebox_content_is_updated(const char *id, int is_pd);
+
+/*!
  * \brief Replace '\n' with '<br>'
  * \param[in] str Source string
  * \return char* allocated string

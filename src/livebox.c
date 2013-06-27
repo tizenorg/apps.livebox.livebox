@@ -41,6 +41,7 @@
  */
 extern const char *livebox_find_pkgname(const char *filename);
 extern int livebox_request_update_by_id(const char *uri);
+extern int livebox_trigger_update_monitor(const char *id, int is_pd);
 
 struct block {
 	unsigned int idx;
@@ -825,6 +826,11 @@ PUBLIC int livebox_buffer_post_render(struct livebox_buffer *handle)
 	}
 
 	return LB_STATUS_SUCCESS;
+}
+
+PUBLIC int livebox_content_is_updated(const char *filename, int is_pd)
+{
+	return livebox_trigger_update_monitor(filename, is_pd);
 }
 
 /* End of a file */
