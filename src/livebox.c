@@ -473,7 +473,16 @@ static inline int event_handler_wrapper(struct livebox_buffer *buffer, enum buff
 	int ret;
 
 	pkgname = provider_buffer_pkgname(buffer);
-	id = provider_buffer_pkgname(buffer);
+	if (!pkgname) {
+		ErrPrint("pkgname is not valid\n");
+		return LB_STATUS_ERROR_INVALID;
+	}
+
+	id = provider_buffer_id(buffer);
+	if (!id) {
+		ErrPrint("id is not valid[%s]\n", pkgname);
+		return LB_STATUS_ERROR_INVALID;
+	}
 
 	ret = cbdata->handler(buffer, event, timestamp, x, y, cbdata->cbdata);
 
@@ -488,6 +497,7 @@ static inline int event_handler_wrapper(struct livebox_buffer *buffer, enum buff
 	case BUFFER_EVENT_SCROLL_MOVE:
 	case BUFFER_EVENT_SCROLL_DOWN:
 	case BUFFER_EVENT_UNHIGHLIGHT:
+		DbgPrint("Accessibility event: %d\n", event);
 		if (ret < 0)
 			(void)provider_send_access_status(pkgname, id, LB_ACCESS_STATUS_ERROR);
 		else

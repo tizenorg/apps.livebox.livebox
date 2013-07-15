@@ -77,22 +77,22 @@ static int event_handler_cb(struct livebox_buffer *handler, enum buffer_event ev
 	 */
 	switch (evt) {
 	case BUFFER_EVENT_ENTER:
-		evas_event_feed_mouse_in(e, timestamp, NULL);
+		evas_event_feed_mouse_in(e, timestamp * 1000, NULL);
 		break;
 	case BUFFER_EVENT_LEAVE:
-		evas_event_feed_mouse_out(e, timestamp, NULL);
+		evas_event_feed_mouse_out(e, timestamp * 1000, NULL);
 		break;
 	case BUFFER_EVENT_DOWN:
-		evas_event_feed_mouse_in(e, timestamp, NULL);
-		evas_event_feed_mouse_move(e, ix, iy, timestamp + 0.01f, NULL); /* + 0.1f just for fake event */
-		evas_event_feed_mouse_down(e, 1, EVAS_BUTTON_NONE, timestamp + 0.02f, NULL); /* + 0.2f just for fake event */
+		evas_event_feed_mouse_in(e, timestamp * 1000, NULL);
+		evas_event_feed_mouse_move(e, ix, iy, (timestamp + 0.01f) * 1000, NULL); /* + 0.1f just for fake event */
+		evas_event_feed_mouse_down(e, 1, EVAS_BUTTON_NONE, (timestamp + 0.02f) * 1000, NULL); /* + 0.2f just for fake event */
 		break;
 	case BUFFER_EVENT_MOVE:
-		evas_event_feed_mouse_move(e, ix, iy, timestamp, NULL);
+		evas_event_feed_mouse_move(e, ix, iy, timestamp * 1000, NULL);
 		break;
 	case BUFFER_EVENT_UP:
-		evas_event_feed_mouse_up(e, 1, EVAS_BUTTON_NONE, timestamp, NULL);
-		evas_event_feed_mouse_out(e, timestamp + 0.01f, NULL); /* + 0.1f just for fake event */
+		evas_event_feed_mouse_up(e, 1, EVAS_BUTTON_NONE, timestamp * 1000, NULL);
+		evas_event_feed_mouse_out(e, (timestamp + 0.01f) * 1000, NULL); /* + 0.1f just for fake event */
 		break;
 	case BUFFER_EVENT_HIGHLIGHT:
 		if (!parent_elm) {
