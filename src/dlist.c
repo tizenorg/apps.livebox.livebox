@@ -31,8 +31,9 @@ struct dlist *dlist_append(struct dlist *list, void *data)
 	struct dlist *item;
 
 	item = malloc(sizeof(*item));
-	if (!item)
+	if (!item) {
 		return NULL;
+	}
 
 	item->next = NULL;
 	item->data = data;
@@ -58,8 +59,9 @@ struct dlist *dlist_prepend(struct dlist *list, void *data)
 	struct dlist *item;
 
 	item = malloc(sizeof(*item));
-	if (!item)
+	if (!item) {
 		return NULL;
+	}
 
 	if (!list) {
 		item->prev = item;
@@ -75,8 +77,9 @@ struct dlist *dlist_prepend(struct dlist *list, void *data)
 
 struct dlist *dlist_remove(struct dlist *list, struct dlist *l)
 {
-	if (!list || !l)
+	if (!list || !l) {
 		return NULL;
+	}
 
 	if (l == list) {
 		l->prev = list->prev;
@@ -85,8 +88,9 @@ struct dlist *dlist_remove(struct dlist *list, struct dlist *l)
 		l->prev->next = l->next;
 	}
 
-	if (l->next)
+	if (l->next) {
 		l->next->prev = l->prev;
+	}
 
 	free(l);
 	return list;
@@ -98,8 +102,9 @@ struct dlist *dlist_find_data(struct dlist *list, void *data)
 	void *_data;
 
 	dlist_foreach(list, l, _data) {
-		if (data == _data)
+		if (data == _data) {
 			return l;
+		}
 	}
 
 	return NULL;
@@ -142,8 +147,9 @@ struct dlist *dlist_nth(struct dlist *l, int nth)
 
 	i = 0;
 	dlist_foreach(l, n, data) {
-		if (i == nth)
+		if (i == nth) {
 			return l;
+		}
 
 		i++;
 	}

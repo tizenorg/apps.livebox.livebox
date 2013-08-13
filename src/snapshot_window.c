@@ -157,8 +157,9 @@ static void del_cb(void *data, Evas *e, Evas_Object *obj, void *event_info)
 	struct snapshot_info *info;
 
 	info = evas_object_data_del(obj, "snapshot,info");
-	if (!info)
+	if (!info) {
 		return;
+	}
 
 	SECURE_LOGD("Delete object (%s)\n", info->id);
 
@@ -203,16 +204,18 @@ static Eina_Bool direct_snapshot_cb(void *data)
 	e = evas_object_evas_get(snapshot_win);
 	if (!e) {
 		LOGE("Invalid object, failed to get Evas\n");
-		if (flush_cb)
+		if (flush_cb) {
 			flush_cb(snapshot_win, info->id, LB_STATUS_ERROR_FAULT, info->data);
+		}
 		return ECORE_CALLBACK_CANCEL;
 	}
 
 	ee = ecore_evas_ecore_evas_get(e);
 	if (!ee) {
 		LOGE("Unable to get Ecore_Evas object\n");
-		if (flush_cb)
+		if (flush_cb) {
 			flush_cb(snapshot_win, info->id, LB_STATUS_ERROR_FAULT, info->data);
+		}
 		return ECORE_CALLBACK_CANCEL;
 	}
 
@@ -222,14 +225,16 @@ static Eina_Bool direct_snapshot_cb(void *data)
 	canvas = ecore_evas_buffer_pixels_get(ee);
 	if (!canvas) {
 		LOGE("Failed to get canvas\n");
-		if (flush_cb)
+		if (flush_cb) {
 			flush_cb(snapshot_win, info->id, LB_STATUS_ERROR_FAULT, info->data);
+		}
 		return ECORE_CALLBACK_CANCEL;
 	}
 
 	status = flush_to_file(canvas, info->id, w, h);
-	if (flush_cb)
+	if (flush_cb) {
 		flush_cb(snapshot_win, info->id, status, info->data);
+	}
 	return ECORE_CALLBACK_CANCEL;
 }
 
@@ -257,24 +262,27 @@ static Eina_Bool snapshot_cb(void *data)
 	e = evas_object_evas_get(snapshot_win);
 	if (!e) {
 		LOGE("Invalid object\n");
-		if (flush_cb)
+		if (flush_cb) {
 			flush_cb(snapshot_win, info->id, LB_STATUS_ERROR_FAULT, info->data);
+		}
 		return ECORE_CALLBACK_CANCEL;
 	}
 
 	ee = ecore_evas_ecore_evas_get(e);
 	if (!ee) {
 		LOGE("Invalid object (ee)\n");
-		if (flush_cb)
+		if (flush_cb) {
 			flush_cb(snapshot_win, info->id, LB_STATUS_ERROR_FAULT, info->data);
+		}
 		return ECORE_CALLBACK_CANCEL;
 	}
 
 	canvas = (void*)ecore_evas_buffer_pixels_get(ee);
 	if (!canvas) {
 		LOGD("Failed to get pixel canvas\n");
-		if (flush_cb)
+		if (flush_cb) {
 			flush_cb(snapshot_win, info->id, LB_STATUS_ERROR_FAULT, info->data);
+		}
 		return ECORE_CALLBACK_CANCEL;
 	}
 
@@ -383,8 +391,9 @@ static void resize_cb(void *data, Evas *e, Evas_Object *obj, void *event_info)
 	int oh;
 
 	ee = ecore_evas_ecore_evas_get(e);
-	if (!ee)
+	if (!ee) {
 		return;
+	}
 
 	ecore_evas_geometry_get(ee, NULL, NULL, &w, &h);
 	evas_object_geometry_get(obj, NULL, NULL, &ow, &oh);
@@ -489,8 +498,9 @@ PUBLIC int livebox_snapshot_window_flush(Evas_Object *snapshot_win, double timeo
 		 * or the developer will get confused
 		 */
 		info->flush_timer = ecore_timer_add(0.0001f, direct_snapshot_cb, snapshot_win);
-		if (!info->flush_timer)
+		if (!info->flush_timer) {
 			return LB_STATUS_ERROR_FAULT;
+		}
 	} else if (info->render_cnt) {
 		/*!
 		 * Try to watit pre-render callback.
@@ -498,8 +508,9 @@ PUBLIC int livebox_snapshot_window_flush(Evas_Object *snapshot_win, double timeo
 		 */
 		DbgPrint("Rendered %d times already\n", info->render_cnt);
 		info->flush_timer = ecore_timer_add(info->timeout, snapshot_cb, snapshot_win);
-		if (!info->flush_timer)
+		if (!info->flush_timer) {
 			return LB_STATUS_ERROR_FAULT;
+		}
 	}
 
 	info->flush_cb = flush_cb;
@@ -513,8 +524,9 @@ PUBLIC int livebox_snapshot_window_flush(Evas_Object *snapshot_win, double timeo
 PUBLIC int livebox_snapshot_window_del(Evas_Object *snapshot_win)
 {
 	Evas *e;
-	if (!snapshot_win || !evas_object_data_get(snapshot_win, "snapshot,info"))
+	if (!snapshot_win || !evas_object_data_get(snapshot_win, "snapshot,info")) {
 		return LB_STATUS_ERROR_INVALID;
+	}
 
 	e = evas_object_evas_get(snapshot_win);
 	evas_event_callback_del(e, EVAS_CALLBACK_RENDER_POST, post_render_cb);

@@ -141,30 +141,37 @@ PUBLIC int livebox_desc_close(struct livebox_desc *handle)
 	struct dlist *n;
 	struct block *block;
 
-	if (!handle)
+	if (!handle) {
 		return LB_STATUS_ERROR_INVALID;
+	}
 
 	dlist_foreach_safe(handle->block_list, l, n, block) {
 		handle->block_list = dlist_remove(handle->block_list, l);
 
 		fprintf(handle->fp, "{\n");
-		if (block->type)
+		if (block->type) {
 			fprintf(handle->fp, "type=%s\n", block->type);
+		}
 
-		if (block->part)
+		if (block->part) {
 			fprintf(handle->fp, "part=%s\n", block->part);
+		}
 
-		if (block->data)
+		if (block->data) {
 			fprintf(handle->fp, "data=%s\n", block->data);
+		}
 
-		if (block->option)
+		if (block->option) {
 			fprintf(handle->fp, "option=%s\n", block->option);
+		}
 
-		if (block->id)
+		if (block->id) {
 			fprintf(handle->fp, "id=%s\n", block->id);
+		}
 
-		if (block->target_id)
+		if (block->target_id) {
 			fprintf(handle->fp, "target=%s\n", block->target_id);
+		}
 		fprintf(handle->fp, "}\n");
 
 		free(block->type);
@@ -176,7 +183,9 @@ PUBLIC int livebox_desc_close(struct livebox_desc *handle)
 		free(block);
 	}
 
-	fclose(handle->fp);
+	if (fclose(handle->fp) != 0) {
+		ErrPrint("fclose: %s\n", strerror(errno));
+	}
 	free(handle);
 	return LB_STATUS_SUCCESS;
 }
@@ -185,12 +194,14 @@ PUBLIC int livebox_desc_set_category(struct livebox_desc *handle, const char *id
 {
 	struct block *block;
 
-	if (!handle || !category)
+	if (!handle || !category) {
 		return LB_STATUS_ERROR_INVALID;
+	}
 
 	block = calloc(1, sizeof(*block));
-	if (!block)
+	if (!block) {
 		return LB_STATUS_ERROR_MEMORY;
+	}
 
 	block->type = strdup(LB_DESC_TYPE_INFO);
 	if (!block->type) {
@@ -234,12 +245,14 @@ PUBLIC int livebox_desc_set_size(struct livebox_desc *handle, const char *id, in
 	struct block *block;
 	char buffer[BUFSIZ];
 
-	if (!handle)
+	if (!handle) {
 		return LB_STATUS_ERROR_INVALID;
+	}
 
 	block = calloc(1, sizeof(*block));
-	if (!block)
+	if (!block) {
 		return LB_STATUS_ERROR_MEMORY;
+	}
 
 	block->type = strdup(LB_DESC_TYPE_INFO);
 	if (!block->type) {
@@ -285,16 +298,19 @@ PUBLIC char *livebox_util_nl2br(const char *str)
 	char *ret;
 	char *ptr;
 
-	if (!str)
+	if (!str) {
 		return NULL;
+	}
 
 	len = strlen(str);
-	if (!len)
+	if (!len) {
 		return NULL;
+	}
 
 	ret = malloc(len + 1);
-	if (!ret)
+	if (!ret) {
 		return NULL;
+	}
 
 	ptr = ret;
 	i = 0;
@@ -347,8 +363,9 @@ PUBLIC int livebox_desc_set_id(struct livebox_desc *handle, int idx, const char 
 			free(block->target_id);
 			block->target_id = NULL;
 
-			if (!id || !strlen(id))
+			if (!id || !strlen(id)) {
 				return LB_STATUS_SUCCESS;
+			}
 
 			block->target_id = strdup(id);
 			if (!block->target_id) {
@@ -370,14 +387,17 @@ PUBLIC int livebox_desc_add_block(struct livebox_desc *handle, const char *id, c
 {
 	struct block *block;
 
-	if (!handle || !type)
+	if (!handle || !type) {
 		return LB_STATUS_ERROR_INVALID;
+	}
 
-	if (!part)
+	if (!part) {
 		part = "";
+	}
 
-	if (!data)
+	if (!data) {
 		data = "";
+	}
 
 	block = calloc(1, sizeof(*block));
 	if (!block) {
@@ -498,10 +518,11 @@ static inline int event_handler_wrapper(struct livebox_buffer *buffer, enum buff
 	case BUFFER_EVENT_SCROLL_DOWN:
 	case BUFFER_EVENT_UNHIGHLIGHT:
 		DbgPrint("Accessibility event: %d\n", event);
-		if (ret < 0)
+		if (ret < 0) {
 			(void)provider_send_access_status(pkgname, id, LB_ACCESS_STATUS_ERROR);
-		else
+		} else {
 			(void)provider_send_access_status(pkgname, id, ret);
+		}
 		break;
 	default:
 		break;
@@ -602,8 +623,9 @@ PUBLIC int livebox_release_buffer(struct livebox_buffer *handle)
 {
 	struct livebox_buffer_data *user_data;
 
-	if (!handle)
+	if (!handle) {
 		return LB_STATUS_ERROR_INVALID;
+	}
 
 	user_data = provider_buffer_user_data(handle);
 	if (user_data) {
@@ -622,12 +644,14 @@ PUBLIC void *livebox_ref_buffer(struct livebox_buffer *handle)
 	int w, h, size;
 	int ret;
 
-	if (!handle)
+	if (!handle) {
 		return NULL;
+	}
 
 	user_data = provider_buffer_user_data(handle);
-	if (!user_data)
+	if (!user_data) {
 		return NULL;
+	}
 
 	if (user_data->accelerated) {
 		DbgPrint("H/W accelerated buffer is allocated\n");
@@ -648,8 +672,9 @@ PUBLIC void *livebox_ref_buffer(struct livebox_buffer *handle)
 
 PUBLIC int livebox_unref_buffer(void *buffer)
 {
-	if (!buffer)
+	if (!buffer) {
 		return LB_STATUS_ERROR_INVALID;
+	}
 
 	DbgPrint("Unref buffer\n");
 	return provider_buffer_unref(buffer);
@@ -661,8 +686,9 @@ PUBLIC int livebox_sync_buffer(struct livebox_buffer *handle)
 	const char *pkgname;
 	const char *id;
 
-	if (!handle)
+	if (!handle) {
 		return LB_STATUS_ERROR_INVALID;
+	}
 
 	user_data = provider_buffer_user_data(handle);
 	if (!user_data) {
@@ -690,18 +716,21 @@ PUBLIC int livebox_sync_buffer(struct livebox_buffer *handle)
 	provider_buffer_sync(handle);
 
 	if (user_data->is_pd) {
-		if (provider_send_desc_updated(pkgname, id, NULL) < 0)
+		if (provider_send_desc_updated(pkgname, id, NULL) < 0) {
 			ErrPrint("Failed to send PD updated (%s)\n", id);
+		}
 	} else {
 		int w;
 		int h;
 		int pixel_size;
 
-		if (provider_buffer_get_size(handle, &w, &h, &pixel_size) < 0)
+		if (provider_buffer_get_size(handle, &w, &h, &pixel_size) < 0) {
 			ErrPrint("Failed to get size (%s)\n", id);
+		}
 
-		if (provider_send_updated(pkgname, id, w, h, -1.0f, NULL, NULL) < 0)
+		if (provider_send_updated(pkgname, id, w, h, -1.0f, NULL, NULL) < 0) {
 			ErrPrint("Failed to send updated (%s)\n", id);
+		}
 	}
 
 	return LB_STATUS_SUCCESS;
@@ -709,8 +738,9 @@ PUBLIC int livebox_sync_buffer(struct livebox_buffer *handle)
 
 PUBLIC int livebox_support_hw_buffer(struct livebox_buffer *handle)
 {
-	if (!handle)
+	if (!handle) {
 		return LB_STATUS_ERROR_INVALID;
+	}
 
 	return provider_buffer_pixmap_is_support_hw(handle);
 }
@@ -720,15 +750,18 @@ PUBLIC int livebox_create_hw_buffer(struct livebox_buffer *handle)
 	struct livebox_buffer_data *user_data;
 	int ret;
 
-	if (!handle)
+	if (!handle) {
 		return LB_STATUS_ERROR_INVALID;
+	}
 
 	user_data = provider_buffer_user_data(handle);
-	if (!user_data)
+	if (!user_data) {
 		return LB_STATUS_ERROR_INVALID;
+	}
 
-	if (user_data->accelerated)
+	if (user_data->accelerated) {
 		return -EALREADY;
+	}
 
 	ret = provider_buffer_pixmap_create_hw(handle);
 	user_data->accelerated = (ret == 0);
@@ -738,12 +771,14 @@ PUBLIC int livebox_create_hw_buffer(struct livebox_buffer *handle)
 PUBLIC int livebox_destroy_hw_buffer(struct livebox_buffer *handle)
 {
 	struct livebox_buffer_data *user_data;
-	if (!handle)
+	if (!handle) {
 		return LB_STATUS_ERROR_INVALID;
+	}
 
 	user_data = provider_buffer_user_data(handle);
-	if (!user_data || !user_data->accelerated)
+	if (!user_data || !user_data->accelerated) {
 		return LB_STATUS_ERROR_INVALID;
+	}
 
 	user_data->accelerated = 0;
 
@@ -754,12 +789,14 @@ PUBLIC void *livebox_buffer_hw_buffer(struct livebox_buffer *handle)
 {
 	struct livebox_buffer_data *user_data;
 
-	if (!handle)
+	if (!handle) {
 		return NULL;
+	}
 
 	user_data = provider_buffer_user_data(handle);
-	if (!user_data || !user_data->accelerated)
+	if (!user_data || !user_data->accelerated) {
 		return NULL;
+	}
 
 	return provider_buffer_pixmap_hw_addr(handle);
 }
@@ -768,15 +805,18 @@ PUBLIC int livebox_buffer_pre_render(struct livebox_buffer *handle)
 {
 	struct livebox_buffer_data *user_data;
 
-	if (!handle)
+	if (!handle) {
 		return LB_STATUS_ERROR_INVALID;
+	}
 
 	user_data = provider_buffer_user_data(handle);
-	if (!user_data)
+	if (!user_data) {
 		return LB_STATUS_ERROR_INVALID;
+	}
 
-	if (!user_data->accelerated)
+	if (!user_data->accelerated) {
 		return LB_STATUS_SUCCESS;
+	}
 
 	/*!
 	 * \note
@@ -792,15 +832,18 @@ PUBLIC int livebox_buffer_post_render(struct livebox_buffer *handle)
 	const char *id;
 	struct livebox_buffer_data *user_data;
 
-	if (!handle)
+	if (!handle) {
 		return LB_STATUS_ERROR_INVALID;
+	}
 
 	user_data = provider_buffer_user_data(handle);
-	if (!user_data)
+	if (!user_data) {
 		return LB_STATUS_ERROR_INVALID;
+	}
 
-	if (!user_data->accelerated)
+	if (!user_data->accelerated) {
 		return LB_STATUS_SUCCESS;
+	}
 
 	pkgname = provider_buffer_pkgname(handle);
 	if (!pkgname) {
@@ -821,18 +864,21 @@ PUBLIC int livebox_buffer_post_render(struct livebox_buffer *handle)
 	}
 
 	if (user_data->is_pd == 1) {
-		if (provider_send_desc_updated(pkgname, id, NULL) < 0)
+		if (provider_send_desc_updated(pkgname, id, NULL) < 0) {
 			ErrPrint("Failed to send PD updated (%s)\n", id);
+		}
 	} else {
 		int w;
 		int h;
 		int pixel_size;
 
-		if (provider_buffer_get_size(handle, &w, &h, &pixel_size) < 0)
+		if (provider_buffer_get_size(handle, &w, &h, &pixel_size) < 0) {
 			ErrPrint("Failed to get size (%s)\n", id);
+		}
 
-		if (provider_send_updated(pkgname, id, w, h, -1.0f, NULL, NULL) < 0)
+		if (provider_send_updated(pkgname, id, w, h, -1.0f, NULL, NULL) < 0) {
 			ErrPrint("Failed to send updated (%s)\n", id);
+		}
 	}
 
 	return LB_STATUS_SUCCESS;

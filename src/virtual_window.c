@@ -243,8 +243,9 @@ static void free_fb(void *data, void *ptr)
 {
 	struct info *info = data;
 
-	if (!info->handle)
+	if (!info->handle) {
 		return;
+	}
 
 	if (info->is_hw) {
 		if (livebox_destroy_hw_buffer(info->handle) == 0) {
@@ -266,8 +267,9 @@ static void resize_cb(void *data, Evas *e, Evas_Object *obj, void *event_info)
 	Ecore_Evas *ee;
 
 	ee = ecore_evas_ecore_evas_get(e);
-	if (!ee)
+	if (!ee) {
 		return;
+	}
 
 	evas_object_geometry_get(obj, NULL, NULL, &info->width, &info->height);
 	SECURE_LOGD("Resize to %dx%d\n", info->width, info->height);
@@ -288,8 +290,9 @@ static void del_cb(void *data, Evas *e, Evas_Object *obj, void *event_info)
 	struct info *info = data;
 
 	ee = ecore_evas_ecore_evas_get(e);
-	if (!ee)
+	if (!ee) {
 		return;
+	}
 
 	ecore_evas_free(ee);
 	free(info->id);
@@ -300,24 +303,28 @@ static void pre_render_cb(void *data, Evas *e, void *event_info)
 {
 	struct info *info = data;
 
-	if (!info->handle)
+	if (!info->handle) {
 		return;
+	}
 
-	if (info->is_hw)
+	if (info->is_hw) {
 		livebox_buffer_pre_render(info->handle);
+	}
 }
 
 static void post_render_cb(void *data, Evas *e, void *event_info)
 {
 	struct info *info = data;
 
-	if (!info->handle)
+	if (!info->handle) {
 		return;
+	}
 
-	if (info->is_hw)
+	if (info->is_hw) {
 		livebox_buffer_post_render(info->handle);
-	else
+	} else {
 		livebox_sync_buffer(info->handle);
+	}
 }
 
 PUBLIC Evas_Object *virtual_window_create(const char *id, int width, int height)
@@ -382,16 +389,19 @@ PUBLIC int virtual_window_set_parent_elm(Evas_Object *win, Evas_Object *parent)
 	Evas *e;
 	Ecore_Evas *ee;
 
-	if (!win)
+	if (!win) {
 		return LB_STATUS_ERROR_INVALID;
+	}
 
 	e = evas_object_evas_get(win);
-	if (!e)
+	if (!e) {
 		return LB_STATUS_ERROR_FAULT;
+	}
 
 	ee = ecore_evas_ecore_evas_get(e);
-	if (!ee)
+	if (!ee) {
 		return LB_STATUS_ERROR_FAULT;
+	}
 
 	ecore_evas_data_set(ee, "parent,elm", parent);
 	return 0;

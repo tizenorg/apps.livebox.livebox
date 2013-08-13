@@ -1,6 +1,6 @@
 Name: liblivebox
 Summary: Library for the development of a livebox 
-Version: 0.4.2
+Version: 0.4.3
 Release: 1
 Group: HomeTF/Livebox
 License: Flora License
@@ -27,6 +27,11 @@ Livebox development library (dev)
 %setup -q
 
 %build
+%if 0%{?tizen_build_binary_release_type_eng}
+export CFLAGS="${CFLAGS} -DTIZEN_ENGINEER_MODE"
+export CXXFLAGS="${CXXFLAGS} -DTIZEN_ENGINEER_MODE"
+export FFLAGS="${FFLAGS} -DTIZEN_ENGINEER_MODE"
+%endif
 %cmake .
 make %{?jobs:-j%jobs}
 
