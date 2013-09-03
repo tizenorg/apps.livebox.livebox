@@ -760,7 +760,7 @@ PUBLIC int livebox_create_hw_buffer(struct livebox_buffer *handle)
 	}
 
 	if (user_data->accelerated) {
-		return -EALREADY;
+		return LB_STATUS_ERROR_ALREADY;
 	}
 
 	ret = provider_buffer_pixmap_create_hw(handle);

@@ -14,3 +14,14 @@
  * limitations under the License.
  */
 
+/*!
+ * \ingroup CAPI_LIVEBOX_FRAMEWORK Tizen livebox framework
+ * \defgroup CAPI_LIVEBOX_HELPER_MODULE Inhouse(EFL) Livebox helper library
+ * \brief This helper library only can be used for Inhouse(EFL) liveboxes.
+ * \section CAPI_LIVEBOX_HELPER_MODULE_HEADER Required Header
+ * \#include <livebox.h>
+ * \section CAPI_LIVEBOX_HELPER_MODULE_OVERVIEW Overview
+ * Help the inhouse(EFL) Livebox developer to generate description data formally.
+ * This API set is only be able to used data-provider-slave process.
+ * Because some API should be linked with it while loading.
+ */

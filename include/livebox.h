@@ -23,37 +23,150 @@ extern "C" {
 
 #include <Evas.h>
 
-struct livebox_buffer; /* Defined by provider */
+/*!
+ * \addtogroup CAPI_LIVEBOX_HELPER_MODULE Inhouse(EFL) Livebox helper library
+ * \{
+ */
+
+/*!
+ * \brief Defined by provider
+ */
+struct livebox_buffer;
 
 /*!
  * \brief
  * Return values of livebox programming interfaces.
  */
-extern const int DONE; /*!< Operation is successfully done */
-extern const int OUTPUT_UPDATED; /*!< Contents is updated */
+/*!
+ * \brief
+ * Operation is successfully done
+ */
+extern const int DONE;
 
-extern const int NEED_TO_SCHEDULE; /*!< Need to call the livebox_need_to_update and livebox_update_content */
-extern const int NEED_TO_CREATE; /*!< Need to create a new instance */
-extern const int NEED_TO_DESTROY; /*!< Need to destroy this instance */
+/*!
+ * \brief
+ * Contents is updated
+ */
+extern const int OUTPUT_UPDATED;
+
+/*!
+ * \brief
+ * Need to call the livebox_need_to_update and livebox_update_content
+ */
+extern const int NEED_TO_SCHEDULE;
+
+/*!
+ * \brief
+ * Need to create a new instance
+ */
+extern const int NEED_TO_CREATE;
+
+/*!
+ * \brief
+ * Need to destroy this instance
+ */
+extern const int NEED_TO_DESTROY;
+
+/*!
+ * \brief
+ * Need to update
+ */
 extern const int NEED_TO_UPDATE;
 
-extern const int USE_NET; /*!< Using network */
+/*!
+ * \brief
+ * Using network
+ */
+extern const int USE_NET;
 
-extern const int LB_SYS_EVENT_FONT_CHANGED; /*!< System font is changed */
-extern const int LB_SYS_EVENT_LANG_CHANGED; /*!< System language is changed */
-extern const int LB_SYS_EVENT_TIME_CHANGED; /*!< System time is changed */
-extern const int LB_SYS_EVENT_REGION_CHANGED; /*!< Region changed */
+/*!
+ * \brief
+ * System font is changed
+ */
+extern const int LB_SYS_EVENT_FONT_CHANGED;
+
+/*!
+ * \brief
+ * System language is changed
+ */
+extern const int LB_SYS_EVENT_LANG_CHANGED;
+
+/*!
+ * \brief
+ * System time is changed
+ */
+extern const int LB_SYS_EVENT_TIME_CHANGED;
+
+/*!
+ * \brief
+ * Region changed
+ */
+extern const int LB_SYS_EVENT_REGION_CHANGED;
+
+/*!
+ * \brief
+ * Livebox is paused
+ */
 extern const int LB_SYS_EVENT_PAUSED;
-extern const int LB_SYS_EVENT_RESUMED;
-extern const int LB_SYS_EVENT_MMC_STATUS_CHANGED; /*!< MMC Status change event */
 
+/*!
+ * \brief
+ * Livebox is resumed
+ */
+extern const int LB_SYS_EVENT_RESUMED;
+
+/*!
+ * \brief
+ * MMC Status change event
+ */
+extern const int LB_SYS_EVENT_MMC_STATUS_CHANGED;
+
+/*!
+ * \brief
+ * COLOR BLOCK
+ */
 #define LB_DESC_TYPE_COLOR "color"
+
+/*!
+ * \brief
+ * TEXT BLOCK
+ */
 #define LB_DESC_TYPE_TEXT "text"
+
+/*!
+ * \brief
+ * IMAGE BLOCK
+ */
 #define LB_DESC_TYPE_IMAGE "image"
+
+/*!
+ * \brief
+ * SIGNAL BLOCK
+ */
 #define LB_DESC_TYPE_SIGNAL "signal"
+
+/*!
+ * \brief
+ * INFO BLOCK
+ */
 #define LB_DESC_TYPE_INFO "info"
+
+/*!
+ * \brief
+ * DRAG BLOCK
+ */
 #define LB_DESC_TYPE_DRAG "drag"
+
+/*!
+ * \brief
+ * SCRIPT SCRIPT
+ */
 #define LB_DESC_TYPE_SCRIPT "script"
+
+/*!
+ * \brief
+ * ACCESSIBILITY INFORMATION BLOCK
+ */
 #define LB_DESC_TYPE_ACCESS "access"
 
 /*!
@@ -77,96 +190,180 @@ struct event_info {
 };
 #endif
 
+/*!
+ * Livebox description data handle structure.
+ */
 struct livebox_desc;
 
 /*!
  * \brief Update a description file.
+ * \details explain api more detail
+ * \remarks must be used only by Inhouse livebox
  * \param[in] filename
  * \param[in] for_pd
  * \return handle
+ * \retval Handle of desc instance
+ * \pre Should be loaded by data-provider-slave
+ * \post Should be destroyed(flushed) using livebox_desc_close API
+ * \see livebox_desc_close
  */
 extern struct livebox_desc *livebox_desc_open(const char *filename, int for_pd);
 
 /*!
  * \brief Complete the description file updating
- * \param[in] handle
+ * \details Only if this API is called, the description data will be applied to the content of livebox(or PD).
+ * \remarks must be used only by Inhouse livebox
+ * \param[in] handle Handle which is created by livebox_desc_open function
  * \return int
+ * \retval LB_STATUS_SUCCESS If the flushing description data is successfully done.
+ * \retval LB_STATUS_ERROR_INVALID If the given handle is not valid.
+ * \pre handle must be created by livebox_desc_open
+ * \post Handle must not be used after return from this function
+ * \see livebox_desc_open
  */
 extern int livebox_desc_close(struct livebox_desc *handle);
 
 /*!
- * \brief Set the category information of current description data
- * \param[in] handle
- * \param[in] id
- * \param[in] category
+ * \brief
+ *    Set the category information of current description data
+ * \details
+ *    Create a new description block for updating category information of layout object
+ * \remarks N/A
+ * \param[in] handle Handle which is created by livebox_desc_open function
+ * \param[in] id Id string of target object.
+ * \param[in] category Category string that will be used by layout object
  * \return int
+ * \retval LB_STATUS_ERROR_INVALID Invalid handle
+ * \retval LB_STATUS_ERROR_MEMORY Memory is not enough to add this block
+ * \retval index Index(>=0) of added block, which can be used by livebox_desc_set_id
+ * \pre Must be called after create a handle using livebox_desc_open.
+ * \post N/A
+ * \see livebox_desc_set_id
  */
 extern int livebox_desc_set_category(struct livebox_desc *handle, const char *id, const char *category);
 
 /*!
- * \brief Set the content size
- * \param[in] handle
- * \param[in] id
- * \param[in] w
- * \param[in] h
+ * \brief
+ *    Set the content size
+ * \details
+ *    Set the content size of layout
+ * \remarks N/A
+ * \param[in] handle Handle which is created by livebox_desc_open function
+ * \param[in] id Id string of target object.
+ * \param[in] w Width in pixel
+ * \param[in] h Height in pixel
  * \return int
+ * \retval LB_STATUS_ERROR_INVALID Invalid argument
+ * \retval LB_STATUS_ERROR_MEMORY Not enough memory to add a new block
+ * \retval index Index(>=0) of added block Successfully added
+ * \pre N/A
+ * \post N/A
+ * \see livebox_desc_open
+ * \see livebox_desc_set_id
  */
 extern int livebox_desc_set_size(struct livebox_desc *handle, const char *id, int w, int h);
 
 /*!
- * \breif Set the target id of given block
- *        Only available for the script block
- * \param[in] handle
- * \param[in] idx
- * \param[in] id
- * \return ret
+ * \brief
+ *    Set the target id of given block
+ *    Only available for the script block
+ * \details
+ *    N/A
+ * \remarks N/A
+ * \param[in] handle Handle which is created by livebox_desc_open function
+ * \param[in] idx Index of target block
+ * \param[in] id Id String which will be used by other livebox_desc_XXX functions
+ * \return int
+ * \retval LB_STATUS_SUCCESS Id is successfully updated for given idx of desc block
+ * \retval LB_STATUS_ERROR_INVALID Invalid argument
+ * \retval LB_STATUS_ERROR_NOT_EXIST Given index of desc block is not exists
+ * \pre desc block should be exists which has given index "idx"
+ * \post specified Id string("id") can be used by other livebox_desc_XXXX functions
+ * \see livebox_desc_open
+ * \see livebox_desc_set_id
  */
 extern int livebox_desc_set_id(struct livebox_desc *handle, int idx, const char *id);
 
 /*!
  * \brief Add a new block
- * \param[in] handle
+ * \details N/A
+ * \remarks N/A
+ * \param[in] handle Handle which is created by livebox_desc_open function
  * \param[in] id ID of source script object
  * \param[in] type image|text|script|signal|...
  * \param[in] part target part to update with given content(data)
  * \param[in] data content for specified part
  * \param[in] option option for the block. (script: group, image: option, ...)
  * \return idx Index of current description block
+ * \retval LB_STATUS_ERROR_INVALID Invalid argument
+ * \retval LB_STATUS_ERROR_MEMORY Not enough memory to add a new desc block
+ * \retval Index index(>=0) of added desc block
+ * \pre handle must be created using livebox_desc_open
+ * \post N/A
+ * \see livebox_desc_set_id
+ * \see livebox_desc_del_block
  */
 extern int livebox_desc_add_block(struct livebox_desc *handle, const char *id, const char *type, const char *part, const char *data, const char *option);
 
 /*!
  * \brief Delete a added block
- * \param[in] handle
- * \param[in] idx Index of added block
+ * \details
+ *    If you discard the added desc block, use this API and the index of created desc block.
+ * \remarks N/A
+ * \param[in] handle Handle which is created by livebox_desc_open function
+ * \param[in] idx Index of added block, returned from livebox_desc_add_block, livebox_desc_set_size, livebox_desc_set_category, ...
  * \return int
+ * \retval LB_STATUS_SUCCESS Successfully deleted
+ * \retval LB_STATUS_ERROR_NOT_EXIST Given index of desc block is not exists
+ * \pre index must be exists.
+ * \post N/A
+ * \see livebox_desc_add_block
+ * \see livebox_desc_open
  */
 extern int livebox_desc_del_block(struct livebox_desc *handle, int idx);
 
 /*!
  * \brief Notify the updated content to the provider.
- * \param[in] id Instance Id
- * \param[in] is_pd 1 if call for PD or 0(LB).
+ * \details
+ *    Forcely notify the updated contents.
+ *    This function can be used from async callback function to notify the updated content.
+ * \remarks N/A
+ * \param[in] id Instance Id which is passed to you via the first parameter of every livebox_XXXX interface functions.
+ * \param[in] is_pd 1 for updating content of PD or 0(for content of LB).
  * \return int
+ * \retval LB_STATUS_ERROR_MEMORY Not enough memory
+ * \retval LB_STATUS_ERROR_INVALID Invalid argument
+ * \retval LB_STATUS_ERROR_IO I/O failed, Cannot access given resource file(id)
+ * \retval LB_STATUS_SUCCESS Successfully notified
+ * \pre This API only can be used after loaded into the data-provider-slave process.
+ * \post N/A
+ * \see N/A
  */
 extern int livebox_content_is_updated(const char *id, int is_pd);
 
 /*!
- * \brief Replace '\n' with '<br>'
+ * \brief Replace "\n"(new line character) with &lt;br&gt;
+ * \details
+ *    This utility function is used to replace all NEW LINE CHARACTER("\n") with &lt;br&gt; tag.
+ * \remarks N/A
  * \param[in] str Source string
- * \return char* allocated string
+ * \return char *
+ * \retval String that is allocted in the heap
+ * \retval NULL if it fails to replace string
+ * \pre N/A
+ * \post Returned string must has to be free'd by user manually.
+ * \see N/A
  */
 extern char *livebox_util_nl2br(const char *str);
 
 
 /*!
+ * \brief
  * Interfaces for direct buffer management (Available only for the PD area)
  */
-
-
 #ifndef __PROVIDER_BUFFER_H
 /*!
- * \NOTE
+ * \note
  * This enumeration value should be sync'd with provider
  */
 enum buffer_event {
@@ -179,44 +376,66 @@ enum buffer_event {
 	BUFFER_EVENT_KEY_DOWN, /*!< Key down */
 	BUFFER_EVENT_KEY_UP, /*!< Key up */
 
-	BUFFER_EVENT_HIGHLIGHT,
-	BUFFER_EVENT_HIGHLIGHT_NEXT,
-	BUFFER_EVENT_HIGHLIGHT_PREV,
-	BUFFER_EVENT_ACTIVATE,
-	BUFFER_EVENT_ACTION_UP,
-	BUFFER_EVENT_ACTION_DOWN,
-	BUFFER_EVENT_SCROLL_UP,
-	BUFFER_EVENT_SCROLL_MOVE,
-	BUFFER_EVENT_SCROLL_DOWN,
-	BUFFER_EVENT_UNHIGHLIGHT
+	BUFFER_EVENT_HIGHLIGHT, /*!< Accessibility - Highlight */
+	BUFFER_EVENT_HIGHLIGHT_NEXT, /*!< Accessibility - Move highlight to next */
+	BUFFER_EVENT_HIGHLIGHT_PREV, /*!< Accessibility - Move highlight to prev */
+	BUFFER_EVENT_ACTIVATE, /*!< Accessibility - Activate the highlighted object */
+	BUFFER_EVENT_ACTION_UP, /*!< Accessibility - Make UP action */
+	BUFFER_EVENT_ACTION_DOWN, /*!< Accessibility - Make Down action */
+	BUFFER_EVENT_SCROLL_UP, /*!< Accessibility - Scroll up */
+	BUFFER_EVENT_SCROLL_MOVE, /*!< Accessibility - Scroll move */
+	BUFFER_EVENT_SCROLL_DOWN, /*!< Accessibility - Scroll down */
+	BUFFER_EVENT_UNHIGHLIGHT /*!< Accessibility - Remove highlight */
 };
 #endif
 
 /*!
- * \brief Acquire a buffer for PD or LB, Currently, we only supporting the PD.
+ * \brief
+ *    Acquire a buffer for PD or LB, Currently, we only supporting the PD.
+ * \details N/A
+ * \remarks N/A
  * \param[in] id Id of a livebox instance
  * \param[in] is_pd 1 for PD or 0 for livebox
- * \param[in] width Width
- * \param[in] height Height
+ * \param[in] width Width in pixel
+ * \param[in] height Height in pixel
  * \param[in] handler Event handling callback
  * \param[in] data user data for event handling callback
  * \return handler Buffer handle
+ * \retval NULL Failed to acquire buffer
+ * \retval Handle object
+ * \pre
+ *    Given instance must be specify its type as buffer. or this API will be fail
+ * \post
+ *    Allocated buffer object must be released via livebox_release_Buffer
+ * \see livebox_release_buffer
  */
 extern struct livebox_buffer *livebox_acquire_buffer(const char *id, int is_pd, int width, int height, int (*handler)(struct livebox_buffer *, enum buffer_event, double, double, double, void *), void *data);
 
 /*!
  * \brief Acquire the ID of pixmap resource
  *        Only if the provider uses pixmap for providing render buffer.
+ * \details N/A
+ * \remarks Pixmap Id can be destroyed if you call the livebox_release_buffer. than this pixmap Id is not guaranteed to use.
  * \param[in] handle Buffer handle
- * \return pixmap ID if succeed or 0lu
+ * \return unsigned
+ * \retval positive Pixmap Id
+ * \retval 0 failed to get pixmap Id.
+ * \pre The system must be set to use the pixmap method for content sharing
+ * \post N/A
  * \see livebox_acquire_buffer
  */
 extern unsigned long livebox_pixmap_id(struct livebox_buffer *handle);
 
 /*!
- * \brief
+ * \brief Release the buffer of livebox
+ * \details N/A
+ * \remarks N/A
  * \param[in] handle Buffer handle
  * \return int
+ * \retval LB_STATUS_ERROR_INVALID Invalid argument
+ * \retval LB_STATUS_SUCCESS Successfully released
+ * \pre handle must be created using livebox_acquire_buffer.
+ * \post N/A
  * \see livebox_acquire_buffer
  */
 extern int livebox_release_buffer(struct livebox_buffer *handle);
@@ -224,16 +443,28 @@ extern int livebox_release_buffer(struct livebox_buffer *handle);
 /*!
  * \brief Get the address of S/W render buffer.
  *        If you try to use this, after create_hw_buffer, you will get NULL
+ * \details N/A
+ * \remarks N/A
  * \param[in] handle Buffer handle
  * \return void* address of the render buffer
+ * \retval NULL if it falis to get buffer address
+ * \retval address if it succeed to get the buffer address
+ * \pre N/A
+ * \post N/A
  * \see livebox_unref_buffer
  */
 extern void *livebox_ref_buffer(struct livebox_buffer *handle);
 
 /*!
  * \brief Release the S/W render buffer.
- * \param[in] void* Address of render buffer
- * \return int 0 if succeed or errno < 0
+ * \details N/A
+ * \remarks N/A
+ * \param[in] buffer Address of render buffer
+ * \return int
+ * \retval LB_STATUS_ERROR_INVALID Invalid handle
+ * \retval LB_STATUS_SUCCESS Successfully unref'd
+ * \pre livebox_ref_buffer must be called
+ * \post N/A
  * \see livebox_ref_buffer
  */
 extern int livebox_unref_buffer(void *buffer);
@@ -241,47 +472,87 @@ extern int livebox_unref_buffer(void *buffer);
 /*!
  * \brief Sync the updated buffer
  *        This is only needed for non-H/W accelerated buffer
- * \param[in] handler Buffer handle
- * \return int 0 if succeed or errno < 0
+ * \details N/A
+ * \remarks N/A
+ * \param[in] handle Buffer handle
+ * \return int
+ * \retval LB_STATUS_SUCCESS Successfully sync'd
+ * \retval LB_STATUS_ERROR_INVALID Invalid argument
+ * \pre N/A
+ * \post N/A
  * \see livebox_acquire_buffer
  */
 extern int livebox_sync_buffer(struct livebox_buffer *handle);
 
 /*!
  * \brief Request schedule the update operation to a provider.
+ * \details
+ * \remarks N/A
  * \param[in] id Livebox Id
  * \return int 0 if succeed or errno < 0
+ * \retval LB_STATUS_SUCCESS Successfully triggered
+ * \retval LB_STATUS_ERROR_INVALID Invalid argument
+ * \retval LB_STATUS_ERROR_MEMORY Not enough memory
+ * \retval LB_STATUS_ERROR_NOT_EXIST Given id instance is not exist
+ * \pre N/A
+ * \post N/A
+ * \see N/A
  */
 extern int livebox_request_update(const char *id);
 
 /*!
  * \brief Checking wether the livebox support H/W acceleration or not.
+ * \details
+ * \remarks N/A
  * \param[in] handle Buffer handle.
- * \return 1 if support or 0
+ * \return int
+ * \retval 1 if the buffer handle support the H/W acceleration buffer
+ * \retval 0 if it doesn not supported
+ * \pre N/A
+ * \post N/A
  * \see livebox_acquire_buffer
  */
 extern int livebox_support_hw_buffer(struct livebox_buffer *handle);
 
 /*!
  * \brief Create the H/W accelerated buffer.
+ * \details Create the H/W accelerated buffer
+ * \remarks N/A
  * \param[in] handle Buffer handle
- * \return 0 if succeed to create it or errno < 0
+ * \return int
+ * \retval LB_STATUS_ERROR_ALREADY H/W buffer is already created
+ * \retval LB_STATUS_ERROR_INVALID Invalid argument
+ * \retval LB_STATUS_SUCCESS Successfully created
+ * \pre Must be checked whether the H/W buffer is supported or not.
+ * \post Must be destroyed if it is not necessary
  * \see livebox_support_hw_buffer
  */
 extern int livebox_create_hw_buffer(struct livebox_buffer *handle);
 
 /*!
  * \brief Destroy the H/W accelerated buffer.
+ * \details N/A
+ * \remarks N/A
  * \param[in] handle Buffer handle
- * \return 0 if succeed to destroy it or errno < 0
+ * \return int
+ * \retval LB_STATUS_SUCCESS Successfully destroyed
+ * \retval LB_STATUS_ERROR_INVALID Invalid argument
+ * \pre Must be created h/w buffer using livebox_create_hw_buffer
+ * \post N/A
  * \see livebox_create_hw_buffer
  */
 extern int livebox_destroy_hw_buffer(struct livebox_buffer *handle);
 
 /*!
  * \brief Get the address of accelerated H/W buffer
+ * \details N/A
+ * \remarks N/A
  * \param[in] handle Buffer handle
- * \return void
+ * \return void *
+ * \retval NULL failed to get H/W accelerated buffer address
+ * \retval addr H/W accelerated buffer address
+ * \pre N/A
+ * \post N/A
  * \see livebox_create_hw_buffer
  */
 extern void *livebox_buffer_hw_buffer(struct livebox_buffer *handle);
@@ -289,21 +560,37 @@ extern void *livebox_buffer_hw_buffer(struct livebox_buffer *handle);
 /*!
  * \brief Pre-processing for rendering content.
  *        This is only needed for accessing H/W accelerated buffer.
+ * \details N/A
+ * \remarks N/A
  * \param[in] handle Buffer handle
- * \return 0 if succeed or errno < 0
+ * \return int
+ * \retval LB_STATUS_ERROR_INVALID Invalid handle
+ * \retval LB_STATUS_SUCCESS Successfully done
+ * \pre N/A
+ * \post livebox_buffer_post_render must be called after the rendering (accessing buffer) is completed.
  * \see livebox_support_hw_buffer
+ * \see livebox_buffer_post_render
  */
 extern int livebox_buffer_pre_render(struct livebox_buffer *handle);
 
 /*!
  * \brief Post-processing for rendering content.
+ * \details N/A
+ * \remarks N/A
  * \param[in] handle Buffer handle
- * \return 0 if succeed or errno < 0
+ * \return integer 0 if succeed or errno < 0
+ * \retval LB_STATUS_SUCCESS if succeed
+ * \retval LB_STATUS_ERROR_INVALID Invalid argument
+ * \pre livebox_buffer_pre_render must be called
+ * \post N/A
  * \see livebox_support_hw_buffer
+ * \see livebox_buffer_pre_render
  */
 extern int livebox_buffer_post_render(struct livebox_buffer *handle);
 
-/*
+/*!
+ * \brief
+ * Deprecated API set.
 extern Evas_Object *livebox_snapshot_window_add(const char *id, int size_type);
 extern int livebox_snapshot_window_flush(Evas_Object *snapshot_win, double timeout, void (*flush_cb)(Evas_Object *snapshot_window, const char *id, int status, void *data), void *data);
 extern int livebox_snapshot_window_del(Evas_Object *snapshot_win);
@@ -311,7 +598,10 @@ extern Evas_Object *livebox_virtual_window_add(const char *id, int width, int he
 extern int livebox_virtual_window_del(Evas_Object *virtual_win);
 */
 
-// End of a file
+/*!
+ * \}
+ */
+
 #ifdef __cplusplus
 }
 #endif
