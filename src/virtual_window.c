@@ -160,7 +160,7 @@ static int event_handler_cb(struct livebox_buffer *handler, enum buffer_event ev
 		action_type = ELM_ACCESS_ACTION_SCROLL;
 		action_info.x = ix;
 		action_info.y = iy;
-		action_info.mouse_type = 0;
+		action_info.mouse_type = 2;
 		ret = elm_access_action(parent_elm, action_type, &action_info);
 		ret = (ret == EINA_FALSE) ? LB_ACCESS_STATUS_ERROR : LB_ACCESS_STATUS_DONE;
 		break;
@@ -169,6 +169,7 @@ static int event_handler_cb(struct livebox_buffer *handler, enum buffer_event ev
 			ret = LB_ACCESS_STATUS_ERROR;
 			break;
 		}
+		action_type = ELM_ACCESS_ACTION_SCROLL;
 		action_info.x = ix;
 		action_info.y = iy;
 		action_info.mouse_type = 1;
@@ -180,7 +181,10 @@ static int event_handler_cb(struct livebox_buffer *handler, enum buffer_event ev
 			ret = LB_ACCESS_STATUS_ERROR;
 			break;
 		}
-		action_info.mouse_type = 2;
+		action_type = ELM_ACCESS_ACTION_SCROLL;
+		action_info.x = ix;
+		action_info.y = iy;
+		action_info.mouse_type = 0;
 		ret = elm_access_action(parent_elm, action_type, &action_info);
 		ret = (ret == EINA_FALSE) ? LB_ACCESS_STATUS_ERROR : LB_ACCESS_STATUS_DONE;
 		break;
