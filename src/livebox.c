@@ -544,7 +544,6 @@ PUBLIC struct livebox_buffer *livebox_acquire_buffer(const char *filename, int i
 	struct livebox_buffer *handle;
 	char *uri;
 	int uri_len;
-	struct event_cbdata *cbdata;
 
 	if (!filename || !width || !height) {
 		ErrPrint("Invalid argument: %p(%dx%d)\n", filename, width, height);
