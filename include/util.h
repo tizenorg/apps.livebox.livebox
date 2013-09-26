@@ -15,6 +15,6 @@
  */
 
 extern int util_check_extension(const char *filename, const char *check_ptr);
-extern double util_get_timestamp(void);
+extern double util_timestamp(void);
 
 /* End of a file */

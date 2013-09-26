@@ -19,6 +19,7 @@
 #include <errno.h>
 #include <sys/time.h>
 
+#include <Ecore.h>
 #include <dlog.h>
 
 #include "debug.h"
@@ -41,13 +42,17 @@ int util_check_extension(const char *filename, const char *check_ptr)
 	return 0;
 }
 
-double util_get_timestamp(void)
+double util_timestamp(void)
 {
+#if defined(_USE_ECORE_TIME_GET)
+	return ecore_time_get();
+#else
 	struct timeval tv;
 
 	gettimeofday(&tv, NULL);
 
 	return (double)tv.tv_sec + (double)tv.tv_usec / 1000000.0f;
+#endif
 }
 
 /* End of a file */
