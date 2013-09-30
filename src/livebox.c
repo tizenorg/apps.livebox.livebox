@@ -20,6 +20,8 @@
 #include <string.h> /* strdup */
 #include <libgen.h>
 #include <unistd.h> /* access */
+#define __USE_GNU
+#include <dlfcn.h>
 
 #include <dlog.h>
 #include <livebox-service.h>
@@ -39,9 +41,15 @@
 /*!
  * \brief This function is defined by the data-provider-slave
  */
-extern const char *livebox_find_pkgname(const char *filename);
-extern int livebox_request_update_by_id(const char *uri);
-extern int livebox_trigger_update_monitor(const char *id, int is_pd);
+static struct info {
+	const char *(*find_pkgname)(const char *filename);
+	int (*request_update_by_id)(const char *uri);
+	int (*trigger_update_monitor)(const char *id, int is_pd);
+} s_info = {
+	.find_pkgname = NULL,
+	.request_update_by_id = NULL,
+	.trigger_update_monitor = NULL,
+};
 
 struct block {
 	unsigned int idx;
@@ -569,7 +577,17 @@ PUBLIC struct livebox_buffer *livebox_acquire_buffer(const char *filename, int i
 	}
 
 	snprintf(uri, uri_len, FILE_SCHEMA "%s", filename);
-	pkgname = livebox_find_pkgname(uri);
+	if (!s_info.find_pkgname) {
+		s_info.find_pkgname = dlsym(RTLD_DEFAULT, "livebox_find_pkgname");
+		if (!s_info.find_pkgname) {
+			ErrPrint("Failed to find a \"livebox_find_pkgname\"\n");
+			free(user_data);
+			free(uri);
+			return NULL;
+		}
+	}
+
+	pkgname = s_info.find_pkgname(uri);
 	if (!pkgname) {
 		ErrPrint("Invalid Request\n");
 		free(user_data);
@@ -608,7 +626,15 @@ PUBLIC int livebox_request_update(const char *filename)
 	}
 
 	snprintf(uri, uri_len, FILE_SCHEMA "%s", filename);
-	ret = livebox_request_update_by_id(uri);
+	if (!s_info.request_update_by_id) {
+		s_info.request_update_by_id = dlsym(RTLD_DEFAULT, "livebox_request_update_by_id");
+		if (!s_info.request_update_by_id) {
+			ErrPrint("\"livebox_request_update_by_id\" is not exists\n");
+			free(uri);
+			return LB_STATUS_ERROR_FAULT;
+		}
+	}
+	ret = s_info.request_update_by_id(uri);
 	free(uri);
 	return ret;
 }
@@ -885,7 +911,15 @@ PUBLIC int livebox_buffer_post_render(struct livebox_buffer *handle)
 
 PUBLIC int livebox_content_is_updated(const char *filename, int is_pd)
 {
-	return livebox_trigger_update_monitor(filename, is_pd);
+	if (!s_info.trigger_update_monitor) {
+		s_info.trigger_update_monitor = dlsym(RTLD_DEFAULT, "livebox_trigger_update_monitor");
+		if (!s_info.trigger_update_monitor) {
+			ErrPrint("Trigger update monitor function is not exists\n");
+			return LB_STATUS_ERROR_FAULT;
+		}
+	}
+
+	return s_info.trigger_update_monitor(filename, is_pd);
 }
 
 /* End of a file */
