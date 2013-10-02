@@ -37,6 +37,17 @@ struct info {
 	int is_hw; /*!< 1 if a buffer is created on the H/W accelerated place or 0 */
 };
 
+static inline Evas_Object *get_highlighted_object(Evas_Object *obj)
+{
+	Evas_Object *o, *ho;
+
+	o = evas_object_name_find(evas_object_evas_get(obj), "_elm_access_disp");
+	if (!o) return NULL;
+
+	ho = evas_object_data_get(o, "_elm_access_target");
+	return ho;
+}
+
 /*!
  * \note
  * Every user event (mouse) on the buffer will be passed via this event callback
@@ -103,7 +114,18 @@ static int event_handler_cb(struct livebox_buffer *handler, enum buffer_event ev
 		action_info.x = ix;
 		action_info.y = iy;
 		ret = elm_access_action(parent_elm, action_type, &action_info);
-		ret = (ret == EINA_FALSE) ? LB_ACCESS_STATUS_ERROR : LB_ACCESS_STATUS_DONE;
+		if (ret == EINA_TRUE) {
+			if (!get_highlighted_object(edje)) {
+				ErrPrint("Highlighted object is not found\n");
+				ret = LB_ACCESS_STATUS_ERROR;
+			} else {
+				DbgPrint("Highlighted object is found\n");
+				ret = LB_ACCESS_STATUS_DONE;
+			}
+		} else {
+			ErrPrint("Action error\n");
+			ret = LB_ACCESS_STATUS_ERROR;
+		}
 		break;
 	case BUFFER_EVENT_HIGHLIGHT_NEXT:
 		if (!parent_elm) {
