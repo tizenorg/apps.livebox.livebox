@@ -115,7 +115,7 @@ static int event_handler_cb(struct livebox_buffer *handler, enum buffer_event ev
 		action_info.y = iy;
 		ret = elm_access_action(parent_elm, action_type, &action_info);
 		if (ret == EINA_TRUE) {
-			if (!get_highlighted_object(edje)) {
+			if (!get_highlighted_object(parent_elm)) {
 				ErrPrint("Highlighted object is not found\n");
 				ret = LB_ACCESS_STATUS_ERROR;
 			} else {

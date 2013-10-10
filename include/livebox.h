@@ -171,6 +171,19 @@ extern const int LB_SYS_EVENT_MMC_STATUS_CHANGED;
 
 /*!
  * \brief
+ * Set highlight to given part
+ */
+#define LB_DESC_TYPE_ACCESS_OPERATION	"access,operation"
+
+#define LB_DESC_DATA_ACCESS_OPERATION_HL_SET "set,hl"
+#define LB_DESC_DATA_ACCESS_OPERATION_HL_UNSET "unset,hl"
+#define LB_DESC_DATA_ACCESS_OPERATION_HL_NEXT "next,hl"
+#define LB_DESC_DATA_ACCESS_OPERATION_HL_PREV "prev,hl"
+#define LB_DESC_OPTION_ACCESS_HL_LOOP "cycle"
+#define LB_DESC_OPTION_ACCESS_HL_NOLOOP "no,cycle"
+
+/*!
+ * \brief
  * Extra event informatino for livebox_content_event interface function
  */
 #ifndef __PROVIDER_H
