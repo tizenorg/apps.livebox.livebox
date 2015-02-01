@@ -1,0 +1,128 @@
+diff --git a/src/virtual_window.c b/src/virtual_window.c
+index 1c42a7c..7a487ff 100644
+--- a/src/virtual_window.c
++++ b/src/virtual_window.c
+@@ -40,9 +40,14 @@
+ static struct static_info {
+ 	Ecore_Evas *(*alloc_canvas)(int w, int h, void *(*a)(void *data, int size), void (*f)(void *data, void *ptr), void *data);
+ 	Ecore_Evas *(*alloc_canvas_with_stride)(int w, int h, void *(*a)(void *data, int size, int *stride, int *bpp), void (*f)(void *data, void *ptr), void *data);
++	Ecore_Evas *(*alloc_canvas_with_pixmap)(const char *disp_name, Ecore_X_Window parent,
++					int x, int y, int w, int h,
++					Ecore_X_Pixmap (*alloc_cb)(void *data, Ecore_X_Window parent, int w, int h, int *depth),
++					void (*free_cb)(void *data, Ecore_X_Pixmap pixmap), void *data);
+ } s_info = {
+ 	.alloc_canvas = NULL,
+ 	.alloc_canvas_with_stride = NULL,
++	.alloc_canvas_with_pixmap = NULL,
+ };
+ 
+ /*!
+@@ -639,12 +644,70 @@ static void ecore_evas_free_cb(Ecore_Evas *ee)
+ 	info->ee = NULL;
+ }
+ 
++/**
++ * @note
++ * This callback can be called twice (or more) to get a several pixmaps
++ * Acquired pixmaps are used for double/tripple buffering for canvas
++ */
++static Ecore_X_Pixmap alloc_pixmap_cb(void *data, Ecore_X_Window parent, int w, int h, int *depth)
++{
++	struct info *info = data;
++
++	if (info->ee) {
++		ecore_evas_geometry_get(info->ee, NULL, NULL, &info->w, &info->h);
++		DbgPrint("Size of ee is updated: %dx%d (info: %p)\n", info->w, info->h, info);
++	}
++
++	/*!
++	 * Acquire a buffer for canvas.
++	 */
++	info->handle = dynamicbox_acquire_buffer(info->id, info->is_gbar,
++					info->w, info->h, sizeof(int), 0,
++					event_handler_cb, info);
++	if (!info->handle) {
++		ErrPrint("Failed to get the buffer\n");
++		return 0u;
++	}
++
++	info->is_hw = 0;
++	return (Ecore_X_Pixmap)dynamicbox_resource_id(info->handle);
++}
++
++static void free_pixmap_cb(void *data, Ecore_X_Pixmap pixmap)
++{
++	struct info *info = data;
++
++	if (!info->handle) {
++		return;
++	}
++
++	if (info->is_hw) {
++		ErrPrint("Impossible\n");
++	}
++
++	dynamicbox_release_buffer(info->handle);
++	info->handle = NULL;
++
++	if (info->deleted) {
++		free(info->id);
++		info->id = NULL;
++
++		free(info);
++	}
++}
++
+ PUBLIC Evas_Object *dynamicbox_get_evas_object(const char *id, int is_pd)
+ {
+ 	struct info *info;
+ 	Evas_Object *rect;
++	const char *engine;
++
++	if (!s_info.alloc_canvas && !s_info.alloc_canvas_with_stride && !s_info.alloc_canvas_with_pixmap) {
++		s_info.alloc_canvas_with_pixmap = dlsym(RTLD_DEFAULT, "ecore_evas_gl_x11_pixmap_allocfunc_new");
++		if (!s_info.alloc_canvas_with_pixmap) {
++			DbgPrint("pixmap_allocfunc_new is not found\n");
++		}
+ 
+-	if (!s_info.alloc_canvas && !s_info.alloc_canvas_with_stride) {
+ 		s_info.alloc_canvas_with_stride = dlsym(RTLD_DEFAULT, "ecore_evas_buffer_allocfunc_with_stride_new");
+ 		if (!s_info.alloc_canvas_with_stride) {
+ 			DbgPrint("allocfunc_with_stirde_new is not found\n");
+@@ -655,7 +718,7 @@ PUBLIC Evas_Object *dynamicbox_get_evas_object(const char *id, int is_pd)
+ 			ErrPrint("allocfunc_new is not found\n");
+ 		}
+ 
+-		if (!s_info.alloc_canvas_with_stride && !s_info.alloc_canvas) {
++		if (!s_info.alloc_canvas_with_stride && !s_info.alloc_canvas && !s_info.alloc_canvas_with_pixmap) {
+ 			ErrPrint("No way to allocate canvas\n");
+ 			return NULL;
+ 		}
+@@ -687,10 +750,23 @@ PUBLIC Evas_Object *dynamicbox_get_evas_object(const char *id, int is_pd)
+ 	info->w = 1;
+ 	info->h = 1;
+ 
+-	if (!dynamicbox_conf_auto_align() && s_info.alloc_canvas_with_stride) {
+-		info->ee = s_info.alloc_canvas_with_stride(1, 1, alloc_stride_fb, free_fb, info);
+-	} else {
+-		info->ee = s_info.alloc_canvas(1, 1, alloc_fb, free_fb, info);
++	engine = elm_config_preferred_engine_get();
++	DbgPrint("Preferred engine: %s\n", engine);
++	if (engine && !strcmp(engine, "opengl_x11")) {
++		if (s_info.alloc_canvas_with_pixmap) {
++			info->ee = s_info.alloc_canvas_with_pixmap(NULL, 0u, 0, 0, 1, 1, alloc_pixmap_cb, free_pixmap_cb, info);
++		}
++	}
++
++	if (!info->ee) {
++		/**
++		 * Fallback to buffer backend
++		 */
++		if (!dynamicbox_conf_auto_align() && s_info.alloc_canvas_with_stride) {
++			info->ee = s_info.alloc_canvas_with_stride(1, 1, alloc_stride_fb, free_fb, info);
++		} else {
++			info->ee = s_info.alloc_canvas(1, 1, alloc_fb, free_fb, info);
++		}
+ 	}
+ 
+ 	if (!info->ee) {

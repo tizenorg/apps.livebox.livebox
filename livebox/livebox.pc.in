@@ -6,6 +6,6 @@ includedir=@INCLUDEDIR@
 Name: livebox
 Description: livebox supporting library
 Version: @VERSION@
-Libs: -L${libdir} -llivebox
+Libs: -L${libdir} -llivebox -ldynamicbox
 Cflags: -I${includedir}
 cppflags: -I${includedir}

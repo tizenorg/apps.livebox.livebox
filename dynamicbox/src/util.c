@@ -29,29 +29,29 @@ int errno;
 
 int util_check_extension(const char *filename, const char *check_ptr)
 {
-	int name_len;
+    int name_len;
 
-	name_len = strlen(filename);
-	while (--name_len >= 0 && *check_ptr) {
-		if (filename[name_len] != *check_ptr)
-			return -EINVAL;
+    name_len = strlen(filename);
+    while (--name_len >= 0 && *check_ptr) {
+	if (filename[name_len] != *check_ptr)
+	    return -EINVAL;
 
-		check_ptr ++;
-	}
+	check_ptr ++;
+    }
 
-	return 0;
+    return 0;
 }
 
 double util_timestamp(void)
 {
 #if defined(_USE_ECORE_TIME_GET)
-	return ecore_time_get();
+    return ecore_time_get();
 #else
-	struct timeval tv;
+    struct timeval tv;
 
-	gettimeofday(&tv, NULL);
+    gettimeofday(&tv, NULL);
 
-	return (double)tv.tv_sec + (double)tv.tv_usec / 1000000.0f;
+    return (double)tv.tv_sec + (double)tv.tv_usec / 1000000.0f;
 #endif
 }
 
